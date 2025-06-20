@@ -1,7 +1,3 @@
-__title__ = 'wolnut'
-__author__ = 'hardwarehaven'
-__license__ = 'MIT'
-__copyright__ = 'Copyright 2025 hardwarehaven'
 __version__ = '1.0.0'
 
 
