@@ -61,7 +61,7 @@ class ClientStateTracker:
                     self._client_states[name].update(state)
 
         except Exception as e:
-            logger.warning("Failed to load state from file: %s", e)
+            logger.warning(f"Failed to load state from file: {e}")
 
     def _save_state(self):
         save_data = {
@@ -72,7 +72,7 @@ class ClientStateTracker:
             with open(self._state_file, "w") as f:
                 json.dump(save_data, f)
         except Exception as e:
-            logger.warning("Failed to save state to file: %s", e)
+            logger.warning(f"Failed to save state to file: {e}")
 
     def update(self, client_name: str, online: bool):
         if client_name in self._client_states:

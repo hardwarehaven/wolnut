@@ -36,7 +36,7 @@ def resolve_mac_from_host(host: str) -> str | None:
         subprocess.run(["ping", "-c", "1", host],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except Exception as e:
-        logger.warning("Failed to ping: %s: %s", host, e)
+        logger.warning(f"Failed to ping: {host}: {e}")
         return None
 
     # Read the ARP table
@@ -48,6 +48,6 @@ def resolve_mac_from_host(host: str) -> str | None:
         if match:
             return match.group(0)
     except Exception as e:
-        logger.warning("Failed to resolve ARP for: %s: %s", host, e)
+        logger.warning(f"Failed to resolve ARP for: {host}: {e}")
 
     return None

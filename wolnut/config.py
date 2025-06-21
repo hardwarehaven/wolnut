@@ -56,10 +56,10 @@ def load_config(path: str | None = None) -> WolnutConfig:
             raw = yaml.safe_load(f)
         validate_config(raw)
     except FileNotFoundError:
-        logger.error("Config file not found at '%s'.", path)
+        logger.error(f"Config file not found at '{path}'.")
         sys.exit(1)
     except Exception as e:
-        logger.error("Failed to load or parse config file: %s", e)
+        logger.error(f"Failed to load or parse config file: {e}")
         sys.exit(1)
 
     # LOGGING...
@@ -75,19 +75,17 @@ def load_config(path: str | None = None) -> WolnutConfig:
         try:
             mac = raw_client["mac"]
             if mac == "auto":
-                logger.info("Resolving MAC for %s at %s...",
-                            raw_client['name'], raw_client['host'])
+                logger.info(f"Resolving MAC for {raw_client['name']} at {raw_client['host']}...")
                 resolved_mac = resolve_mac_from_host(raw_client["host"])
                 if not resolved_mac:
                     raise ValueError(
                         f"Could not resolve MAC address for {raw_client['name']} ({raw_client['host']})")
                 raw_client["mac"] = resolved_mac
-                logger.info("MAC for %s: %s", raw_client['name'], resolved_mac)
+                logger.info(f"MAC for {raw_client['name']}: {resolved_mac}")
 
             clients.append(ClientConfig(**raw_client))
         except ValueError as e:
-            logger.error("Failed to load client %s: %s",
-                         raw_client.get("name", "?"), e)
+            logger.error(f"Failed to load client {raw_client.get('name', '?')}: {e}")
 
     wolnut_config = WolnutConfig(
         nut=nut,
@@ -101,12 +99,11 @@ def load_config(path: str | None = None) -> WolnutConfig:
 
     if not wolnut_config.apprise_urls is None:
         logger.addUrls(wolnut_config.apprise_urls)
-        logger.info("Apprise notifications enabled with URLs: %s",
-                     wolnut_config.apprise_urls)
+        logger.info(f"Apprise notifications enabled with URLs: {wolnut_config.apprise_urls}")
 
 
     for client in wolnut_config.clients:
-        logger.info("Client: %s at MAC: %s", client.name, client.mac)
+        logger.info(f"Client: {client.name} at MAC: {client.mac}")
         
 
     return wolnut_config

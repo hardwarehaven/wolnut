@@ -28,7 +28,7 @@ def get_ups_status(ups_name: str, username: Optional[str] = None, password: Opti
         )
 
         if result.returncode != 0:
-            logger.error("upsc returned error: %s", result.stderr.strip())
+            logger.error(f"upsc returned error: {result.stderr.strip()}")
             return {}
 
         status = {}
@@ -40,7 +40,7 @@ def get_ups_status(ups_name: str, username: Optional[str] = None, password: Opti
         return status
 
     except Exception as e:
-        logger.error("Failed to get UPS status: %s", e)
+        logger.error(f"Failed to get UPS status: {e}")
         return {}
 
 
@@ -53,8 +53,8 @@ def is_client_online(host: str) -> bool:
             stderr=subprocess.DEVNULL,
             check=False
         )
-        logger.debug("Host: %s Online: %s", host, result.returncode == 0)
+        logger.debug(f"Host: {host} Online: {result.returncode == 0}")
         return result.returncode == 0
     except Exception as e:
-        logger.warning("Failed to ping %s: %s", host, e)
+        logger.warning(f"Failed to ping {host}: {e}")
         return False
