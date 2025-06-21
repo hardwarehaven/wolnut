@@ -1,7 +1,7 @@
 # copy this to config.yaml before running wolnut
 log_level: INFO  # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
 apprise_urls: # URLs for Apprise notifications: https://github.com/caronc/apprise/wiki
-  - "discord://webhook_id/webhook_token"
+  - "" # e.g. discord://webhook_id/webhook_token
 
 nut:
   ups: "ups@localhost"        # Format: <ups-name>@<host>
