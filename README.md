@@ -24,6 +24,7 @@ This helps reboot systems automatically after a controlled shutdown caused by a 
 - Supports NUT with or without authentication
 - Persistent state file for post-reboot recovery
 - Runs as a standalone Python service or Docker container
+- Supports external notifications via [Apprise](https://github.com/caronc/apprise/wiki) URLs
 
 ---
 
