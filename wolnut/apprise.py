@@ -111,7 +111,7 @@ class apprise_notifier:
             return
         self._apprise_instance.add(urls)
         
-    def setLevel(self, level: logging._Level) -> None:
+    def setLevel(self, level: int | str) -> None:
         """
         Sets the logging level for the Apprise notifier.
 
