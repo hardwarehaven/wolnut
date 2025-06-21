@@ -1,8 +1,9 @@
 import subprocess
 import re
 import logging
+from wolnut.apprise import apprise_notifier
 
-logger = logging.getLogger("wolnut")
+logger = apprise_notifier("wolnut")
 
 
 def validate_mac_format(mac: str) -> bool:

@@ -2,8 +2,9 @@ import subprocess
 import logging
 import platform
 from typing import Optional
+from wolnut.apprise import apprise_notifier
 
-logger = logging.getLogger("wolnut")
+logger = apprise_notifier("wolnut")
 
 
 def get_ups_status(ups_name: str, username: Optional[str] = None, password: Optional[str] = None) -> dict:

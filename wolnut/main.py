@@ -4,17 +4,16 @@ from wolnut.config import load_config
 from wolnut.state import ClientStateTracker
 from wolnut.monitor import get_ups_status, is_client_online
 from wolnut.wol import send_wol_packet
+from wolnut.apprise import apprise_notifier
 
-logger = logging.getLogger("wolnut")
+logger = apprise_notifier("wolnut")
 
 
 def main():
     """MAIN LOOP"""
     config = load_config()
-
     logger.setLevel(config.log_level)
     logger.info("WOLNUT started. Monitoring UPS: %s", config.nut.ups)
-
     on_battery = False
     recorded_down_clients = set()
     recorded_up_clients = set()

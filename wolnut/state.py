@@ -3,8 +3,9 @@ import os
 from typing import Dict, Any
 import logging
 import time
+from wolnut.apprise import apprise_notifier
 
-logger = logging.getLogger("wolnut")
+logger = apprise_notifier("wolnut")
 logger.setLevel(logging.INFO)
 
 

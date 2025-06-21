@@ -3,11 +3,11 @@ import yaml
 import logging
 import os
 import sys
-
+import apprise
 from wolnut.utils import validate_mac_format, resolve_mac_from_host
+from wolnut.apprise import apprise_notifier
 
-logger = logging.getLogger("wolnut")
-
+logger = apprise_notifier("wolnut")
 
 @dataclass
 class NutConfig:
@@ -38,9 +38,10 @@ class WolnutConfig:
     wake_on: WakeOnConfig = field(default_factory=WakeOnConfig)
     clients: list[ClientConfig] = field(default_factory=list)
     log_level: str = "INFO"
+    apprise_urls: list[str] | None = None
 
 
-def load_config(path: str = None) -> WolnutConfig:
+def load_config(path: str | None = None) -> WolnutConfig:
 
     if path is None:
         # Prefer /config/config.yaml if it exists
@@ -93,11 +94,20 @@ def load_config(path: str = None) -> WolnutConfig:
         poll_interval=raw.get("poll_interval", 10),
         wake_on=wake_on,
         clients=clients,
-        log_level=raw.get("log_level", "INFO").upper()
+        log_level=raw.get("log_level", "INFO").upper(),
+        apprise_urls=raw.get("apprise_url", None)
     )
     logger.info("Config Imported Successfully")
+
+    if wolnut_config.apprise_urls:
+        logger.addUrls(wolnut_config.apprise_urls)
+        logger.info("Apprise notifications enabled with URLs: %s",
+                     wolnut_config.apprise_urls)
+
+
     for client in wolnut_config.clients:
         logger.info("Client: %s at MAC: %s", client.name, client.mac)
+        
 
     return wolnut_config
 
@@ -126,3 +136,4 @@ def validate_config(raw: dict):
         if mac != "auto" and not validate_mac_format(mac):
             raise ValueError(
                 f"Client '{client['name']}' has invalid MAC address format: {mac}")
+

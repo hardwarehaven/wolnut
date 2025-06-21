@@ -1,7 +1,8 @@
 import logging
 from wakeonlan import send_magic_packet
+from wolnut.apprise import apprise_notifier
 
-logger = logging.getLogger("wolnut")
+logger = apprise_notifier("wolnut")
 
 
 def send_wol_packet(mac_address: str, broadcast_ip: str = "255.255.255.255") -> bool:
