@@ -40,6 +40,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy installed script from builder
 COPY --from=builder /app/.venv .venv
 
-
 # Run the script
 CMD ["wolnut"]

@@ -1,10 +1,11 @@
 __version__ = '1.0.0'
+from .__main__ import main  # re-export
+
+__all__ = ('entrypoint', 'main')
 
 
 def entrypoint():
     import logging
-
-    from .__main__ import main
 
     logging.basicConfig(
         level=logging.INFO,
