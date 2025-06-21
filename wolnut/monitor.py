@@ -2,7 +2,7 @@ import subprocess
 import logging
 import platform
 from typing import Optional
-from wolnut.apprise import apprise_notifier
+from wolnut.apprise_logging import apprise_notifier
 
 logger = apprise_notifier("wolnut")
 

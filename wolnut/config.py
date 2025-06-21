@@ -5,7 +5,7 @@ import os
 import sys
 import apprise
 from wolnut.utils import validate_mac_format, resolve_mac_from_host
-from wolnut.apprise import apprise_notifier
+from wolnut.apprise_logging import apprise_notifier
 
 logger = apprise_notifier("wolnut")
 
@@ -95,11 +95,11 @@ def load_config(path: str | None = None) -> WolnutConfig:
         wake_on=wake_on,
         clients=clients,
         log_level=raw.get("log_level", "INFO").upper(),
-        apprise_urls=raw.get("apprise_url", None)
+        apprise_urls=raw.get("apprise_urls", None)
     )
     logger.info("Config Imported Successfully")
 
-    if wolnut_config.apprise_urls:
+    if not wolnut_config.apprise_urls is None:
         logger.addUrls(wolnut_config.apprise_urls)
         logger.info("Apprise notifications enabled with URLs: %s",
                      wolnut_config.apprise_urls)

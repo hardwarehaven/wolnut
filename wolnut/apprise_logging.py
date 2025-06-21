@@ -58,17 +58,17 @@ class apprise_notifier:
         except Exception as e:
             logging.error("Error sending notification: %s", e)
 
-    def debug(self, body: str, *args:object, title: str = "WOLNUT Debug") -> None:
+    def debug(self, body: str,  title: str = "WOLNUT Debug") -> None:
         """
         Sends a debug notification.
         Args:
             body (str): Body of the notification.
             title (str, optional): Title of the notification. Defaults to "WOLNUT Debug".
         """
-        logger.debug(body, args)
-        self._apprise_notify(body.format(args), logging.DEBUG, title)
+        logger.debug(body)
+        self._apprise_notify(body, logging.DEBUG, title)
 
-    def info(self, body: str, *args:object,  title: str = f"WOLNUT Notification") -> None:
+    def info(self, body: str,   title: str = f"WOLNUT Notification") -> None:
         """
         Sends an informational notification.
 
@@ -76,28 +76,28 @@ class apprise_notifier:
             body (str): Body of the notification.
             title (str, optional): Title of the notification. Defaults to "WOLNUT Notification".
         """
-        logger.info(body, args)
-        self._apprise_notify(body.format(args), logging.INFO, title)
+        logger.info(body)
+        self._apprise_notify(body, logging.INFO, title)
         
-    def warning(self, body: str, *args:object,  title: str = "WOLNUT Warning") -> None:
+    def warning(self, body: str, title: str = "WOLNUT Warning") -> None:
         """
         Sends a warning notification.
         Args:
             body (str): Body of the notification.
             title (str, optional): Title of the notification. Defaults to "WOLNUT Warning".
         """
-        logger.warning(body, args)
-        self._apprise_notify(body.format(args), logging.WARNING, title)
+        logger.warning(body)
+        self._apprise_notify(body, logging.WARNING, title)
         
-    def error(self, body: str, *args:object, title: str = "WOLNUT Error") -> None:
+    def error(self, body: str, title: str = "WOLNUT Error") -> None:
         """
         Sends an error notification.
         Args:
             body (str): Body of the notification.
             title (str, optional): Title of the notification. Defaults to "WOLNUT Error".
         """
-        logger.error(body, args)
-        self._apprise_notify(body.format(args), logging.ERROR, title)
+        logger.error(body)
+        self._apprise_notify(body, logging.ERROR, title)
         
     def addUrls(self, urls: list[str]) -> None:
         """

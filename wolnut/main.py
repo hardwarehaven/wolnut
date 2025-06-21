@@ -4,7 +4,7 @@ from wolnut.config import load_config
 from wolnut.state import ClientStateTracker
 from wolnut.monitor import get_ups_status, is_client_online
 from wolnut.wol import send_wol_packet
-from wolnut.apprise import apprise_notifier
+from wolnut.apprise_logging import apprise_notifier
 
 logger = apprise_notifier("wolnut")
 

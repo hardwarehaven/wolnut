@@ -1,5 +1,5 @@
 import logging
-from wolnut.apprise import apprise_notifier
+from wolnut.apprise_logging import apprise_notifier
 
 logging.basicConfig(
     level=logging.INFO,

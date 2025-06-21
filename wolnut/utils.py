@@ -1,7 +1,7 @@
 import subprocess
 import re
 import logging
-from wolnut.apprise import apprise_notifier
+from wolnut.apprise_logging import apprise_notifier
 
 logger = apprise_notifier("wolnut")
 
