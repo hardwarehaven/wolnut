@@ -1,7 +1,15 @@
-import logging
+__version__ = '1.0.0'
+from .__main__ import main  # re-export
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
-logger = logging.getLogger("wolnut")
+__all__ = ('entrypoint', 'main')
+
+
+def entrypoint():
+    import logging
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s [%(levelname)s] %(message)s',
+    )
+
+    return main()
