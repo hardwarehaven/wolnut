@@ -1,6 +1,6 @@
 import logging
 from wakeonlan import send_magic_packet
-from wolnut.apprise import apprise_notifier
+from wolnut.apprise_logging import apprise_notifier
 
 logger = apprise_notifier("wolnut")
 

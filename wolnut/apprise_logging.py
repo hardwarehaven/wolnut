@@ -27,7 +27,7 @@ class apprise_notifier:
             title (str): Title of the notification.
         """
         if not self._apprise_instance:
-            logging.debug("Apprise instance is not initialized. Cannot send notification.")
+            logger.debug("Apprise instance is not initialized. Cannot send notification.")
             return
         
         if notify_level < logger.getEffectiveLevel():
@@ -52,11 +52,11 @@ class apprise_notifier:
                 title=title,
             )
             if response:
-                logging.info("Notification sent successfully: %s", title)
+                logger.info("Notification sent successfully: %s", title)
             else:
-                logging.error("Failed to send notification: %s", title)
+                logger.error("Failed to send notification: %s", title)
         except Exception as e:
-            logging.error("Error sending notification: %s", e)
+            logger.error("Error sending notification: %s", e)
 
     def debug(self, body: str,  title: str = "WOLNUT Debug") -> None:
         """
@@ -107,7 +107,7 @@ class apprise_notifier:
             urls (list[str]): List of Apprise URLs to add.
         """
         if not urls:
-            logging.debug("No Apprise URLs provided. Skipping addition.")
+            logger.debug("No Apprise URLs provided. Skipping addition.")
             return
         self._apprise_instance.add(urls)
         
