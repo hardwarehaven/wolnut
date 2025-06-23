@@ -17,13 +17,13 @@ RUN mkdir wolnut && echo '__version__ = "0.0.0"' > wolnut/__init__.py && touch R
 COPY pyproject.toml uv.lock .
 
 # Init environment and install dependencies.
-RUN uv sync --locked --no-install-project --no-dev
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-install-project --no-dev
 
 # Copy the application.
 COPY . .
 
 # Install project in .venv
-RUN uv sync --locked --no-dev --no-editable
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev --no-editable
 
 # Runner
 FROM python:3.11-slim
