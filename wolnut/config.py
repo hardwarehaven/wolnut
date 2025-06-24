@@ -106,8 +106,6 @@ def load_config(path: str = None) -> WolnutConfig:
             logger.error("Failed to load iDRAC client %s: %s",
                          raw_idrac.get("name", "?"), e)
 
-                
----------------------------------------------------------------------------
     wolnut_config = WolnutConfig(
         nut=nut,
         poll_interval=raw.get("poll_interval", 10),
