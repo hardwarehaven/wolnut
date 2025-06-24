@@ -7,3 +7,4 @@ services:
         restart: unless-stopped
         volumes:
             - ./config.yaml:/config/config.yaml
+
