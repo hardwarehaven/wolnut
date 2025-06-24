@@ -31,12 +31,13 @@ class ClientConfig:
     mac: str  # "auto" supported
 
 @dataclass
-class idracClientConfig:
+class IDRACClientConfig:
     name: str
     host: str
-    username: str | None = None
-    password: str | None = None
-    verify_ssl: bol = "false"
+    username: str
+    password: str
+    verify_ssl: bool = False  # New field
+
 
 
 @dataclass
@@ -45,7 +46,9 @@ class WolnutConfig:
     poll_interval: int = 10
     wake_on: WakeOnConfig = field(default_factory=WakeOnConfig)
     clients: list[ClientConfig] = field(default_factory=list)
+    idrac_clients: list[IDRACClientConfig] = field(default_factory=list)  # NEW
     log_level: str = "INFO"
+
 
 
 def load_config(path: str = None) -> WolnutConfig:
@@ -96,13 +99,13 @@ def load_config(path: str = None) -> WolnutConfig:
             logger.error("Failed to load client %s: %s",
                          raw_client.get("name", "?"), e)
     idrac_clients = []
-    for raw_idracclient in raw["idrac_clients"]:
+    for raw_idrac in raw.get("idrac_clients", []):
         try:
-            raw_idracclient['name']
-            raw_idracclient['idrac_host']
-            raw_idracclient['username']
-            raw_idracclient['password']
-            raw_idracclient['verify_ssl']
+            idrac_clients.append(IDRACClientConfig(**raw_idrac))
+        except Exception as e:
+            logger.error("Failed to load iDRAC client %s: %s",
+                         raw_idrac.get("name", "?"), e)
+
                 
 ---------------------------------------------------------------------------
     wolnut_config = WolnutConfig(
@@ -110,8 +113,10 @@ def load_config(path: str = None) -> WolnutConfig:
         poll_interval=raw.get("poll_interval", 10),
         wake_on=wake_on,
         clients=clients,
+        idrac_clients=idrac_clients,
         log_level=raw.get("log_level", "INFO").upper()
     )
+
     logger.info("Config Imported Successfully")
     for client in wolnut_config.clients:
         logger.info("Client: %s at MAC: %s", client.name, client.mac)
@@ -143,3 +148,9 @@ def validate_config(raw: dict):
         if mac != "auto" and not validate_mac_format(mac):
             raise ValueError(
                 f"Client '{client['name']}' has invalid MAC address format: {mac}")
+        
+    for i, idrac in enumerate(raw.get("idrac_clients", [])):
+        if "name" not in idrac or "host" not in idrac or "username" not in idrac or "password" not in idrac:
+            raise ValueError(
+                f"iDRAC client #{i} is missing one of the required fields: name, host, username, password"
+            )
