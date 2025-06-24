@@ -15,22 +15,20 @@ wake_on:
   reattempt_delay: 30         # Minimum time (in seconds) between WOL attempts per client
 
 clients:
-  - name: "client 1"                  # Human-readable name
-    host: 192.168.0.100               # IP address preferred for reliability
-    mac: 38:f7:cd:c5:87:6b
-  - name: "client 2"
-    host: hostname.local             # You can use a hostname if it resolves to a reachable interface
-    mac: auto                        # MAC will be resolved using ARP at runtime
+  - name: "Server A"                # Human-readable name
+    type: wol                     # Choose a client type, wol, idrac, ilo, sm_ipmi(supermicro)
+    host: 192.168.0.100             # IP address preferred for reliability
+    mac: aa:bb:cc:dd:ee:ff
 
-idrac_clients:
-  - name: "Dell R740"
-    host: 192.168.0.200
+  - name: "Server B"                # Human-readable name
+    type: wol                     # Choose a client type, wol, idrac, ilo, sm_ipmi(supermicro)
+    host: 192.168.0.101             # IP address preferred for reliability
+    mac: auto                     # MAC will be resolved using ARP at runtime
+
+  - name: Dell R740
+    type: idrac
+    host: server.local            # You can use a hostname if it resolves to a reachable interface
     username: root
     password: calvin
     verify_ssl: false
-  - name: "Dell T640"
-    host: idrac.local
-    username: admin
-    password: secretpass
-    verify_ssl: true
   

@@ -27,16 +27,12 @@ class WakeOnConfig:
 @dataclass
 class ClientConfig:
     name: str
+    type: str  # e.g., "wol", "idrac", "ilo", "sm_ipmi"
     host: str
-    mac: str  # "auto" supported
-
-@dataclass
-class IDRACClientConfig:
-    name: str
-    host: str
-    username: str
-    password: str
-    verify_ssl: bool = False  # New field
+    mac: str | None = None         # Only for WOL
+    username: str | None = None    # Only for idrac/ilo
+    password: str | None = None
+    verify_ssl: bool = False       # Optional for idrac/ilo
 
 
 
@@ -46,7 +42,6 @@ class WolnutConfig:
     poll_interval: int = 10
     wake_on: WakeOnConfig = field(default_factory=WakeOnConfig)
     clients: list[ClientConfig] = field(default_factory=list)
-    idrac_clients: list[IDRACClientConfig] = field(default_factory=list)  # NEW
     log_level: str = "INFO"
 
 
@@ -83,35 +78,28 @@ def load_config(path: str = None) -> WolnutConfig:
     clients = []
     for raw_client in raw["clients"]:
         try:
-            mac = raw_client["mac"]
-            if mac == "auto":
-                logger.info("Resolving MAC for %s at %s...",
-                            raw_client['name'], raw_client['host'])
-                resolved_mac = resolve_mac_from_host(raw_client["host"])
-                if not resolved_mac:
-                    raise ValueError(
-                        f"Could not resolve MAC address for {raw_client['name']} ({raw_client['host']})")
-                raw_client["mac"] = resolved_mac
-                logger.info("MAC for %s: %s", raw_client['name'], resolved_mac)
+            client_type = raw_client.get("type")
+            if client_type == "wol":
+                mac = raw_client.get("mac")
+                if mac == "auto":
+                    logger.info("Resolving MAC for %s at %s...", raw_client['name'], raw_client['host'])
+                    resolved_mac = resolve_mac_from_host(raw_client["host"])
+                    if not resolved_mac:
+                        raise ValueError(f"Could not resolve MAC for {raw_client['name']}")
+                    raw_client["mac"] = resolved_mac
+                    logger.info("MAC for %s: %s", raw_client['name'], resolved_mac)
+                elif not validate_mac_format(mac):
+                    raise ValueError(f"Invalid MAC format for {raw_client['name']}: {mac}")
 
             clients.append(ClientConfig(**raw_client))
-        except ValueError as e:
-            logger.error("Failed to load client %s: %s",
-                         raw_client.get("name", "?"), e)
-    idrac_clients = []
-    for raw_idrac in raw.get("idrac_clients", []):
-        try:
-            idrac_clients.append(IDRACClientConfig(**raw_idrac))
         except Exception as e:
-            logger.error("Failed to load iDRAC client %s: %s",
-                         raw_idrac.get("name", "?"), e)
+            logger.error("Failed to load client %s: %s", raw_client.get("name", "?"), e)
 
     wolnut_config = WolnutConfig(
         nut=nut,
         poll_interval=raw.get("poll_interval", 10),
         wake_on=wake_on,
         clients=clients,
-        idrac_clients=idrac_clients,
         log_level=raw.get("log_level", "INFO").upper()
     )
 
@@ -129,26 +117,17 @@ def validate_config(raw: dict):
     if "nut" not in raw or "ups" not in raw["nut"]:
         raise ValueError("Missing required field: 'nut.ups'")
 
-    for i, client in enumerate(raw["clients"]):
-        if "name" not in client:
-            raise ValueError(f"Client #{i} is missing required field: 'name'")
-        if "host" not in client:
-            raise ValueError(
-                f"Client '{client.get('name', '?')}' is missing required field: 'host'")
-        if "mac" not in client:
-            raise ValueError(
-                f"Client '{client['name']}' is missing required field: 'mac'")
+    for i, client in enumerate(raw.get("clients", [])):
+        if "name" not in client or "host" not in client or "type" not in client:
+            raise ValueError(f"Client #{i} is missing 'name', 'host', or 'type'")
 
-        mac = client["mac"]
-        if not isinstance(mac, str):
-            raise ValueError(
-                f"Client '{client['name']}' has invalid mac format (should be string or 'auto')")
-        if mac != "auto" and not validate_mac_format(mac):
-            raise ValueError(
-                f"Client '{client['name']}' has invalid MAC address format: {mac}")
-        
-    for i, idrac in enumerate(raw.get("idrac_clients", [])):
-        if "name" not in idrac or "host" not in idrac or "username" not in idrac or "password" not in idrac:
-            raise ValueError(
-                f"iDRAC client #{i} is missing one of the required fields: name, host, username, password"
-            )
+        if client["type"] == "wol":
+            if "mac" not in client:
+                raise ValueError(f"WOL client '{client['name']}' is missing 'mac'")
+        elif client["type"] in ["idrac", "ilo", "sm_ipmi"]:
+            for key in ["username", "password"]:
+                if key not in client:
+                    raise ValueError(f"{client['type']} client '{client['name']}' is missing '{key}'")
+        else:
+            raise ValueError(f"Unsupported client type: {client['type']}")
+
