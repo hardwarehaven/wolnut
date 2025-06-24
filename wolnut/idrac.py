@@ -8,7 +8,7 @@ logger = logging.getLogger("wolnut")
 POWER_ACTION_URI = "/redfish/v1/Systems/System.Embedded.1/Actions/ComputerSystem.Reset"
 POWER_STATE_URI = "/redfish/v1/Systems/System.Embedded.1"
 
-def get_idrac_power_state(host, username, password, verify_ssl=False):
+def get_idrac_power_state(host, username, password, verify_ssl):
     url = f"https://{host}{POWER_STATE_URI}"
 
     try:
