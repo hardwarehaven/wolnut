@@ -87,7 +87,16 @@ def load_config(path: str = None) -> WolnutConfig:
         except ValueError as e:
             logger.error("Failed to load client %s: %s",
                          raw_client.get("name", "?"), e)
-
+    idrac_clients = []
+    for raw_idracclient in raw["idrac_clients"]:
+        try:
+            raw_idracclient['name']
+            raw_idracclient['idrac_host']
+            raw_idracclient['username']
+            raw_idracclient['password']
+            raw_idracclient['verify_ssl']
+                
+---------------------------------------------------------------------------
     wolnut_config = WolnutConfig(
         nut=nut,
         poll_interval=raw.get("poll_interval", 10),
