@@ -30,6 +30,14 @@ class ClientConfig:
     host: str
     mac: str  # "auto" supported
 
+@dataclass
+class idracClientConfig:
+    name: str
+    host: str
+    username: str | None = None
+    password: str | None = None
+    verify_ssl: bol = "false"
+
 
 @dataclass
 class WolnutConfig:
