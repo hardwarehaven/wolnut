@@ -145,5 +145,10 @@ def main():
             time.sleep(2)
 
 
-if __name__ == "__main__":
-    main()
+def entrypoint():
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s [%(levelname)s] %(message)s',
+    )
+
+    return main()
