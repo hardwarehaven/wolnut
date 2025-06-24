@@ -4,6 +4,8 @@ from wolnut.config import load_config
 from wolnut.state import ClientStateTracker
 from wolnut.monitor import get_ups_status, is_client_online
 from wolnut.wol import send_wol_packet
+from wolnut.idrac import power_on_idrac_client, get_idrac_power_state
+
 
 logger = logging.getLogger("wolnut")
 
@@ -80,6 +82,27 @@ def main():
                     logger.info("Power restored and battery >= %s%%. Preparing to send WOL...",
                                 config.wake_on.min_battery_percent)
                     wol_being_sent = True
+                    
+                                # Power on iDRAC clients
+                for idrac_client in config.idrac_clients:
+                    state = get_idrac_power_state(
+                        idrac_client.host,
+                        idrac_client.username,
+                        idrac_client.password,
+                        idrac_client.verify_ssl
+                    )
+
+                    if state == "On":
+                        logger.info("iDRAC client %s already powered on", idrac_client.name)
+                        continue
+
+                    logger.info("Sending iDRAC power on to %s at %s", idrac_client.name, idrac_client.host)
+                    power_on_idrac_client(
+                        idrac_client.host,
+                        idrac_client.username,
+                        idrac_client.password,
+                        idrac_client.verify_ssl
+                    )
 
                 for client in config.clients:
 
