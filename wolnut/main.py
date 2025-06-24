@@ -83,7 +83,6 @@ def main():
                                 config.wake_on.min_battery_percent)
                     wol_being_sent = True
                     
-                                # Power on iDRAC clients
                 # Power on iDRAC clients
                 for idrac_client in config.idrac_clients:
                     power_on_idrac_client(
