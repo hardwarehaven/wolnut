@@ -5,7 +5,7 @@ from wolnut.state import ClientStateTracker
 from wolnut.monitor import get_ups_status, is_client_online
 from wolnut.wol import send_wol_packet
 from wolnut.idrac import power_on_idrac_client
-from wolnut.ilo_old import power_on_ilo_client
+from wolnut.ilo import power_on_ilo_client
 from wolnut.sm_ipmi import power_on_sm_ipmi_client
 
 
