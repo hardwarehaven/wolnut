@@ -25,7 +25,7 @@ def get_idrac_power_state(host, username, password, verify_ssl):
     return None
 
 
-def power_on_idrac_client(host, username, password, verify_ssl=False, retries=3, delay=5):
+def power_on_idrac_client(host, username, password, verify_ssl, retries=3, delay=5):
     for attempt in range(1, retries + 1):
         state = get_idrac_power_state(host, username, password, verify_ssl)
         if state == "On":
