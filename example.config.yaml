@@ -28,6 +28,7 @@ clients:
   - name: Dell R740
     type: idrac
     host: server.local            # You can use a hostname if it resolves to a reachable interface
+    ipmi_host: 192.168.0.10
     username: root
     password: calvin
     verify_ssl: false

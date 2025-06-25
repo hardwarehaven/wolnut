@@ -128,6 +128,8 @@ def validate_config(raw: dict):
             for key in ["username", "password"]:
                 if key not in client:
                     raise ValueError(f"{client['type']} client '{client['name']}' is missing '{key}'")
+            if "ipmi_host" not in raw:
+                    raise ValueError(f"Client '{raw.get('name', '<unknown>')}' of type '{client_type}' must have 'ipmi_host'")
         else:
             raise ValueError(f"Unsupported client type: {client['type']}")
 

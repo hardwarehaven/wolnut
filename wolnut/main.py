@@ -149,21 +149,21 @@ def power_on_client(client):
         return send_wol_packet(client.mac)
     elif client.type == "idrac":
         return power_on_idrac_client(
-            host=client.host,
+            ipmi_host=client.ipmi_host,
             username=client.username,
             password=client.password,
             verify_ssl=client.verify_ssl
         )
     elif client.type == "ilo":
         return power_on_ilo_client(
-            host=client.host,
+            ipmi_host=client.ipmi_host,
             username=client.username,
             password=client.password,
             verify_ssl=client.verify_ssl
         )
     elif client.type == "sm_ipmi":
         return power_on_sm_ipmi_client(
-            host=client.host,
+            ipmi_host=client.ipmi_host,
             username=client.username,
             password=client.password,
         )
