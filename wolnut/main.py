@@ -85,51 +85,60 @@ def main():
                     logger.info("Power restored and battery >= %s%%. Preparing to send WOL...",
                                 config.wake_on.min_battery_percent)
                     wol_being_sent = True
-                    
 
-           # Power on all applicable clients
-            for client in config.clients:
-                if state_tracker.should_skip(client.name):
-                    continue
-                if not state_tracker.was_online_before_shutdown(client.name):
-                    logger.info("Skipping power on for %s: was not online before power loss", client.name)
-                    state_tracker.mark_skip(client.name)
-                    continue
-                if state_tracker.is_online(client.name):
-                    logger.info("%s is already online.", client.name)
-                    recorded_up_clients.add(client.name)
-                    continue
-                
-                logger.info("Attempting to power on %s via %s...", client.name, client.type)
-                if power_on_client(client):
-                    state_tracker.mark_wol_sent(client.name)
-                else:
-                    logger.warning("Power on failed for %s", client.name)
+                for client in config.clients:
 
-            recorded_down_clients.clear()
-            for client in config.clients:
-                if not state_tracker.is_online(client.name) and not state_tracker.should_skip(client.name):
-                    recorded_down_clients.add(client.name)    
+                    if state_tracker.should_skip(client.name):
+                        continue
 
-            if len(recorded_down_clients) == 0:
-                logger.info(
-                    "Power Restored and all clients are back online!")
-                restoration_event = False
-                restoration_event_start = None
-                state_tracker.reset()
-                wol_being_sent = False
-            else:
-                if time.time() - restoration_event_start > config.wake_on.client_timeout_sec:
-                    logger.warning(
-                        "Some devices failed to come back online within the timeout period.")
-                    for client in recorded_down_clients:
-                        logger.warning(
-                            "%s failed to come back online within timeout period.", client)
+                    if not state_tracker.was_online_before_shutdown(client.name):
+                        logger.info(
+                            "Skipping power on for %s: was not online before power loss", client.name)
+                        state_tracker.mark_skip(client.name)
+                        continue
+
+                    if state_tracker.is_online(client.name):
+                        if client.name not in recorded_up_clients:
+                            logger.info("%s is online.", client.name)
+                            recorded_down_clients.discard(client.name)
+                            recorded_up_clients.update({client.name})
+                        continue
+
+                    else:
+                        recorded_down_clients.update({client.name})
+                        if state_tracker.should_attempt_wol(
+                            client.name,
+                            config.wake_on.reattempt_delay
+                        ):
+                            logger.info(
+                                "Attempting to power on %s via %s...", client.name, client.type)
+                            if power_on_client(client):
+                                state_tracker.mark_wol_sent(client.name)
+                        else:
+                            logger.debug(
+                                "Waiting to retry power on attemt for %s (delay not reached)", client.name)
+                            
+                            
+
+                if len(recorded_down_clients) == 0:
+                    logger.info(
+                        "Power Restored and all clients are back online!")
                     restoration_event = False
                     restoration_event_start = None
+                    state_tracker.reset()
                     wol_being_sent = False
                 else:
-                    pass
+                    if time.time() - restoration_event_start > config.wake_on.client_timeout_sec:
+                        logger.warning(
+                            "Some devices failed to come back online within the timeout period.")
+                        for client in recorded_down_clients:
+                            logger.warning(
+                                "%s failed to come back online within timeout period.", client)
+                        restoration_event = False
+                        restoration_event_start = None
+                        wol_being_sent = False
+                    else:
+                        pass
 
         elif not on_battery and not restoration_event:
             state_tracker.reset()
