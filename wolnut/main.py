@@ -7,6 +7,8 @@ from wolnut.wol import send_wol_packet
 
 logger = logging.getLogger("wolnut")
 
+def battery_percent(ups_status):
+    return int(float(ups_status.get("battery.charge", 100)))
 
 def main():
     """MAIN LOOP"""
@@ -30,14 +32,14 @@ def main():
         state_tracker.reset()
 
     ups_status = get_ups_status(config.nut.ups)
-    battery_percent = int(ups_status.get("battery.charge", 100))
+    battery_percent = battery_percent(ups_status)
     power_status = ups_status.get("ups.status", "OL")
     logger.info("UPS power status: %s, Battery: %s%%",
                 power_status, battery_percent)
 
     while True:
         ups_status = get_ups_status(config.nut.ups)
-        battery_percent = int(ups_status.get("battery.charge", 100))
+        battery_percent = battery_percent(ups_status)
         power_status = ups_status.get("ups.status", "OL")
 
         logger.debug("UPS power status: %s, Battery: %s%%",
