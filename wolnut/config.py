@@ -29,6 +29,7 @@ class ClientConfig:
     name: str
     type: str  # e.g., "wol", "idrac", "ilo", "sm_ipmi"
     host: str
+    ipmi_host: str | None = None
     mac: str | None = None         # Only for WOL
     username: str | None = None    # Only for idrac/ilo
     password: str | None = None
@@ -128,8 +129,8 @@ def validate_config(raw: dict):
             for key in ["username", "password"]:
                 if key not in client:
                     raise ValueError(f"{client['type']} client '{client['name']}' is missing '{key}'")
-            if "ipmi_host" not in raw:
-                    raise ValueError(f"Client '{raw.get('name', '<unknown>')}' of type '{client_type}' must have 'ipmi_host'")
+            if "ipmi_host" not in client:
+                    raise ValueError(f"Client '{client['name']}' of type {client['type']} must have 'ipmi_host'")
         else:
             raise ValueError(f"Unsupported client type: {client['type']}")
 

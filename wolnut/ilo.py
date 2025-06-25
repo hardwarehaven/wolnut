@@ -9,13 +9,13 @@ logger = logging.getLogger("wolnut")
 POWER_ACTION_URI = "/redfish/v1/Systems/1/Actions/ComputerSystem.Reset"
 POWER_STATE_URI = "/redfish/v1/Systems/1"
 
-def get_ilo_power_state(ipmi_host, username, password):
+def get_ilo_power_state(ipmi_host, username, password,verify_ssl):
     url = f"https://{ipmi_host}{POWER_STATE_URI}"
     try:
         response = requests.get(
             url,
             auth=HTTPBasicAuth(username, password),
-            verify=False,
+            verify=verify_ssl,
             timeout=10
         )
         if response.status_code == 200:
