@@ -121,7 +121,6 @@ def validate_config(raw: dict):
     for i, client in enumerate(raw.get("clients", [])):
         if "name" not in client or "host" not in client or "type" not in client:
             raise ValueError(f"Client #{i} is missing 'name', 'host', or 'type'")
-
         if client["type"] == "wol":
             if "mac" not in client:
                 raise ValueError(f"WOL client '{client['name']}' is missing 'mac'")
