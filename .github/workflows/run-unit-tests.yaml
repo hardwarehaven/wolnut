@@ -26,7 +26,6 @@ jobs:
 
       - name: Run Tests
         run: |
-          cd wolnut
           pip3 install -r requirements.txt
           cd tests
           ./run_tests.sh -v --cov mapchete --cov-report xml:coverage.xml --cov-report=term-missing:skip-covered --junitxml=pytest.xml
