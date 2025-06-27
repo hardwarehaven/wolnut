@@ -5,4 +5,4 @@
 script_dir=$(cd `dirname $0` && pwd)
 
 # Run the tests
-pytest -o pythonpath="$script_dir/../wolnut"
+pytest -o pythonpath="$script_dir/../wolnut" $@
