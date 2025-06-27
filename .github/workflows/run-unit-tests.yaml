@@ -28,18 +28,18 @@ jobs:
         run: |
           pip3 install -r requirements.txt
           cd tests
-          ./run_tests.sh -v --cov mapchete --cov-report xml:coverage.xml --cov-report=term-missing:skip-covered --junitxml=pytest.xml
+          ./run_tests.sh # -v --cov mapchete --cov-report xml:coverage.xml --cov-report=term-missing:skip-covered --junitxml=pytest.xml
 
       # report detailed coverage in PR comment
-      - name: comment test coverage report on PR
-        uses: MishaKav/pytest-coverage-comment@main
-        with:
-          pytest-xml-coverage-path: coverage.xml
-          title: missing coverage
-          badge-title: Test Coverage
-          hide-badge: false
-          hide-report: false
-          create-new-comment: false
-          hide-comment: false
-          report-only-changed-files: false
-          remove-link-from-badge: true
+      # - name: comment test coverage report on PR
+      #   uses: MishaKav/pytest-coverage-comment@main
+      #   with:
+      #     pytest-xml-coverage-path: coverage.xml
+      #     title: missing coverage
+      #     badge-title: Test Coverage
+      #     hide-badge: false
+      #     hide-report: false
+      #     create-new-comment: false
+      #     hide-comment: false
+      #     report-only-changed-files: false
+      #     remove-link-from-badge: true
