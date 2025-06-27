@@ -32,6 +32,6 @@ jobs:
 
       - name: Publish Test Report (for display in workflow UI)
         uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always() # Publish even if tests fail
+        if: (!cancelled())
         with:
-          files: "**/*.xml"
+          files: "tests/pytest.xml"
