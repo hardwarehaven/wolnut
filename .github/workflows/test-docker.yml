@@ -8,7 +8,7 @@ on:
     - "main"
 
 jobs:
-  test-docker-build:
+  test:
     name: 🐳 Test docker image
     runs-on: ubuntu-24.04
     strategy:
