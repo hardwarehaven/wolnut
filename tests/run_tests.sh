@@ -5,4 +5,4 @@
 script_dir=$(cd `dirname $0` && pwd)
 
 # Run tests found in this dir and let pytest know that `wolnut` is at `../`
-pytest -o pythonpath="$script_dir/.."
+pytest -o pythonpath="$script_dir/.." $@

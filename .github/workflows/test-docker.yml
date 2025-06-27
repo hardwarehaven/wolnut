@@ -8,7 +8,44 @@ on:
     - "main"
 
 jobs:
-  test:
+  test-python:
+    name: 🐍 Run PyTests
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        os: ["ubuntu-22.04", "ubuntu-latest"]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run Tests
+        run: |
+          cd wolnut
+          pip3 install -r requirements.txt
+          cd tests
+          ./run_tests.sh -v --cov mapchete --cov-report xml:coverage.xml --cov-report=term-missing:skip-covered --junitxml=pytest.xml
+
+      # report detailed coverage in PR comment
+      - name: comment test coverage report on PR
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-xml-coverage-path: coverage.xml
+          title: missing coverage
+          badge-title: Test Coverage
+          hide-badge: false
+          hide-report: false
+          create-new-comment: false
+          hide-comment: false
+          report-only-changed-files: false
+          remove-link-from-badge: true
+
+  test-docker-build:
     name: 🐳 Test docker image
     runs-on: ubuntu-24.04
     strategy:

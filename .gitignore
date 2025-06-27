@@ -8,6 +8,7 @@ config.yaml
 .vscode/
 .vscode/launch.json
 wolnut_state.json
+**/.pytest_cache
 
 # Magic packet test
 mp-test.py
