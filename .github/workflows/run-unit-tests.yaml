@@ -1,6 +1,5 @@
 name: 🐍 Test application code
 on:
-  push:
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -32,4 +31,7 @@ jobs:
         if: (!cancelled())
         with:
           files: "tests/pytest.xml"
-          comment_mode: off  # remove to get PR comments on test results. Requires additional repo permissions.
+          # remove `comment_mode` or toggle to true to get PR comments detailing the test results.
+          # The docs suggest that this requires `pull-requests: write` permissions.
+          # see: https://github.com/EnricoMi/publish-unit-test-result-action?tab=readme-ov-file#permissions
+          comment_mode: false
