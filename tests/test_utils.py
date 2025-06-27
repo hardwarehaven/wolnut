@@ -10,7 +10,7 @@ def test_validate_mac_format():
   assert not utils.validate_mac_format(invalid_mac_address)
 
 def test_resolve_mac_from_host(mocker):
-  # [ TODO ] - Write tests that assert the appropriate exceptions were raised
+  # [ TODO - Issue #24 ] - Write tests that assert the appropriate exceptions were raised
   class MockSubprocessResultOkay(object):
     stdout = "de:ad:be:ef:be:ad"
 

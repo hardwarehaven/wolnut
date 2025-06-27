@@ -1,5 +1,5 @@
 def test_send_wol_packet(mocker):
-  # [ TODO ] - Write tests that assert the appropriate exceptions were raised
+  # [ TODO - Issue #24 ] - Write tests that assert the appropriate exceptions were raised
 
   # Normally, you'd patch an object. The funky order here is so that
   # we can successfully patch a function. There's probably a better way to do this.

@@ -1,7 +1,7 @@
 import state
 
-# [ TODO ] - These tests aren't really checking much of anything, and should
-#            just be thought of as a scaffold to write real tests.
+# [ TODO - Issue #24 ] - These tests aren't really checking much of anything, and should
+#                        just be thought of as a scaffold to write real tests.
 
 def test__load_state(mocker):
   mock_path_exists = mocker.patch("state.os.path.exists")
