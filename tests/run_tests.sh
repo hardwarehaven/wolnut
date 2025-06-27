@@ -8,4 +8,5 @@ echo "Testing from directory: $script_dir"
 ls -lah
 
 # Run tests found in this dir and let pytest know that `wolnut` is at `../`
-pytest -o pythonpath="$script_dir/.." $@
+echo pytest -o pythonpath="$script_dir/.."
+pytest -o pythonpath="$script_dir/.."
