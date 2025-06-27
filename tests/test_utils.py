@@ -1,5 +1,5 @@
+import utils
 import subprocess
-from wolnut import utils
 
 def test_validate_mac_format():
   valid_mac_address = "de:ad:be:ef:be:ad"

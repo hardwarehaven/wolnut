@@ -3,10 +3,6 @@
 # The tests should live alongside this file.
 # Figure out where we are so we can let pytest know where to find the `wolnut` package.
 script_dir=$(cd `dirname $0` && pwd)
-cd "$script_dir"
-echo "Testing from directory: $script_dir"
-ls -lah
 
-# Run tests found in this dir and let pytest know that `wolnut` is at `../`
-echo pytest -o pythonpath="$script_dir/.."
-pytest -o pythonpath="$script_dir/.."
+# Run the tests
+pytest -o pythonpath="$script_dir/../wolnut"
