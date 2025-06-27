@@ -28,10 +28,10 @@ jobs:
         run: |
           pip3 install -r requirements.txt
           cd tests
-          ./run_tests.sh -v --junitxml=/tmp/pytest.xml
+          ./run_tests.sh -v --junitxml=pytest.xml
 
       - name: Publish Test Report (for display in workflow UI)
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always() # Publish even if tests fail
         with:
-          files: /tmp/pytest.xml
+          files: "**/*.xml"
