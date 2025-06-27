@@ -1,11 +1,8 @@
 name: 🐍 Test application code
 on:
   push:
-  #   branches-ignore:
-  #   - "main"
-  # pull_request:
-  #   branches-ignore:
-  #   - "main"
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   test-python:
@@ -35,3 +32,4 @@ jobs:
         if: (!cancelled())
         with:
           files: "tests/pytest.xml"
+          comment_mode: off  # remove to get PR comments on test results. Requires additional repo permissions.
