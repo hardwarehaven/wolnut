@@ -22,7 +22,8 @@ jobs:
           pip3 install -r requirements.txt
           cd wolnut/
           echo '# Formatting Report' | tee -a $GITHUB_STEP_SUMMARY
-          black --check . | tee -a $GITHUB_STEP_SUMMARY
+          # 'black' prints to stderr for some reason.
+          black --check *.py 2>&1 | tee -a $GITHUB_STEP_SUMMARY
   test-python:
     name: Run PyTests
     runs-on: ubuntu-24.04
