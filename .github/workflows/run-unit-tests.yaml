@@ -1,6 +1,5 @@
 name: 🐍 Test application code
 on:
-  push:  # Don't merge until I've removed this. I'm testing something really quick.
   pull_request:
     types: [opened, synchronize, reopened]
 
