@@ -54,4 +54,4 @@ jobs:
           # remove `comment_mode` or toggle to true to get PR comments detailing the test results.
           # The docs suggest that this requires `pull-requests: write` permissions.
           # see: https://github.com/EnricoMi/publish-unit-test-result-action?tab=readme-ov-file#permissions
-          comment_mode: false
+          comment_mode: off
