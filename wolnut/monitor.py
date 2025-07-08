@@ -1,4 +1,5 @@
 import subprocess
+import os
 import logging
 import platform
 from typing import Optional
@@ -6,15 +7,13 @@ from typing import Optional
 logger = logging.getLogger("wolnut")
 
 
-def get_ups_status(ups_name: str, username: Optional[str] = None, password: Optional[str] = None) -> dict:
+def get_ups_status(
+    ups_name: str, username: Optional[str] = None, password: Optional[str] = None
+) -> dict:
     env = None
 
     if username and password:
-        env = {
-            **subprocess.os.environ,
-            "USERNAME": username,
-            "PASSWORD": password
-        }
+        env = {**os.environ, "USERNAME": username, "PASSWORD": password}
 
     try:
         result = subprocess.run(
@@ -23,7 +22,7 @@ def get_ups_status(ups_name: str, username: Optional[str] = None, password: Opti
             text=True,
             env=env,
             timeout=5,
-            check=False
+            check=False,
         )
 
         if result.returncode != 0:
@@ -50,7 +49,7 @@ def is_client_online(host: str) -> bool:
             ["ping", count_flag, "1", host],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            check=False
+            check=False,
         )
         logger.debug("Host: %s Online: %s", host, result.returncode == 0)
         return result.returncode == 0

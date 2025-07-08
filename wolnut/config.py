@@ -7,6 +7,7 @@ import sys
 
 from wolnut.client import (
     BaseClientConfig,
+    ClientConfig,
     create_client_config,
 )
 from wolnut.client import WolClientConfig
@@ -30,12 +31,6 @@ class WakeOnConfig:
     min_battery_percent: int = 20
     client_timeout_sec: int = 360
     reattempt_delay: int = 30
-
-
-# Tagged union type for all client configurations
-ClientConfig = Union[
-    WolClientConfig, IdracClientConfig, IloClientConfig, SmIpmiClientConfig
-]
 
 
 @dataclass
@@ -75,7 +70,7 @@ def load_config(path: str | None = None) -> WolnutConfig:
 
     # LOGGING...
 
-    clients = []
+    clients: list[ClientConfig] = []
     for raw_client in raw["clients"]:
         try:
             client = create_client_config(raw_client)

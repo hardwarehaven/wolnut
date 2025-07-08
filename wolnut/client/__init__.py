@@ -6,7 +6,7 @@ such as WOL, iDRAC, iLO, and Supermicro IPMI.
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import override
+from typing import Union, override
 
 from wolnut.client.idrac import power_on_idrac_client
 from wolnut.client.ilo import power_on_ilo_client
@@ -281,7 +281,13 @@ class SmIpmiClientConfig(BaseClientConfig):
         )
 
 
-def create_client_config(raw: dict) -> BaseClientConfig:
+# Tagged union type for all client configurations
+ClientConfig = Union[
+    WolClientConfig, IdracClientConfig, IloClientConfig, SmIpmiClientConfig
+]
+
+
+def create_client_config(raw: dict) -> ClientConfig:
     """Create a client configuration based on the raw data provided."""
     # determine the type of client from the raw data
     client_type = raw.get("type")
