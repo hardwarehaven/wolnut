@@ -3,11 +3,6 @@ import logging
 from wolnut.config import load_config
 from wolnut.state import ClientStateTracker
 from wolnut.monitor import get_ups_status, is_client_online
-from wolnut.wol import send_wol_packet
-from wolnut.idrac import power_on_idrac_client
-from wolnut.ilo import power_on_ilo_client
-from wolnut.sm_ipmi import power_on_sm_ipmi_client
-
 
 
 logger = logging.getLogger("wolnut")
@@ -32,21 +27,21 @@ def main():
     if state_tracker.was_ups_on_battery():
         logger.info("WOLNUT is resuming from a UPS battery event")
         restoration_event = True
-        #state_tracker.reset()
+        # state_tracker.reset()
 
     ups_status = get_ups_status(config.nut.ups)
     battery_percent = int(ups_status.get("battery.charge", 100))
     power_status = ups_status.get("ups.status", "OL")
-    logger.info("UPS power status: %s, Battery: %s%%",
-                power_status, battery_percent)
+    logger.info("UPS power status: %s, Battery: %s%%", power_status, battery_percent)
 
     while True:
         ups_status = get_ups_status(config.nut.ups)
         battery_percent = int(ups_status.get("battery.charge", 100))
         power_status = ups_status.get("ups.status", "OL")
 
-        logger.debug("UPS power status: %s, Battery: %s%%",
-                     power_status, battery_percent)
+        logger.debug(
+            "UPS power status: %s, Battery: %s%%", power_status, battery_percent
+        )
 
         # Check each client
         for client in config.clients:
@@ -73,17 +68,26 @@ def main():
                     """Power restored, but battery still below 
                     minimum percentage (%s%%/%s%%). Waiting...""",
                     battery_percent,
-                    config.wake_on.min_battery_percent)
+                    config.wake_on.min_battery_percent,
+                )
 
-            elif time.time() - restoration_event_start < config.wake_on.restore_delay_sec:
+            elif (
+                time.time() - restoration_event_start < config.wake_on.restore_delay_sec
+            ):
                 logger.info(
                     "Power restored, waiting %s seconds before waking clients...",
-                    int(config.wake_on.restore_delay_sec-(time.time() - restoration_event_start)))
+                    int(
+                        config.wake_on.restore_delay_sec
+                        - (time.time() - restoration_event_start)
+                    ),
+                )
 
             else:
                 if not wol_being_sent:
-                    logger.info("Power restored and battery >= %s%%. Preparing to send WOL...",
-                                config.wake_on.min_battery_percent)
+                    logger.info(
+                        "Power restored and battery >= %s%%. Preparing to send WOL...",
+                        config.wake_on.min_battery_percent,
+                    )
                     wol_being_sent = True
 
                 for client in config.clients:
@@ -93,7 +97,9 @@ def main():
 
                     if not state_tracker.was_online_before_shutdown(client.name):
                         logger.info(
-                            "Skipping power on for %s: was not online before power loss", client.name)
+                            "Skipping power on for %s: was not online before power loss",
+                            client.name,
+                        )
                         state_tracker.mark_skip(client.name)
                         continue
 
@@ -107,33 +113,40 @@ def main():
                     else:
                         recorded_down_clients.update({client.name})
                         if state_tracker.should_attempt_wol(
-                            client.name,
-                            config.wake_on.reattempt_delay
+                            client.name, config.wake_on.reattempt_delay
                         ):
                             logger.info(
-                                "Attempting to power on %s via %s...", client.name, client.type)
-                            if power_on_client(client):
+                                "Attempting to power on %s via %s...",
+                                client.name,
+                                client.type,
+                            )
+                            if client.send_power_on():
                                 state_tracker.mark_wol_sent(client.name)
                         else:
                             logger.debug(
-                                "Waiting to retry power on attemt for %s (delay not reached)", client.name)
-                            
-                            
+                                "Waiting to retry power on attemt for %s (delay not reached)",
+                                client.name,
+                            )
 
                 if len(recorded_down_clients) == 0:
-                    logger.info(
-                        "Power Restored and all clients are back online!")
+                    logger.info("Power Restored and all clients are back online!")
                     restoration_event = False
                     restoration_event_start = None
                     state_tracker.reset()
                     wol_being_sent = False
                 else:
-                    if time.time() - restoration_event_start > config.wake_on.client_timeout_sec:
+                    if (
+                        time.time() - restoration_event_start
+                        > config.wake_on.client_timeout_sec
+                    ):
                         logger.warning(
-                            "Some devices failed to come back online within the timeout period.")
+                            "Some devices failed to come back online within the timeout period."
+                        )
                         for client in recorded_down_clients:
                             logger.warning(
-                                "%s failed to come back online within timeout period.", client)
+                                "%s failed to come back online within timeout period.",
+                                client,
+                            )
                         restoration_event = False
                         restoration_event_start = None
                         wol_being_sent = False
@@ -150,36 +163,6 @@ def main():
             time.sleep(config.poll_interval)
         else:
             time.sleep(2)
-
-
-
-def power_on_client(client):
-    if client.type == "wol":
-        return send_wol_packet(client.mac)
-    elif client.type == "idrac":
-        return power_on_idrac_client(
-            ipmi_host=client.ipmi_host,
-            username=client.username,
-            password=client.password,
-            verify_ssl=client.verify_ssl
-        )
-    elif client.type == "ilo":
-        return power_on_ilo_client(
-            ipmi_host=client.ipmi_host,
-            username=client.username,
-            password=client.password,
-            verify_ssl=client.verify_ssl
-        )
-    elif client.type == "sm_ipmi":
-        return power_on_sm_ipmi_client(
-            ipmi_host=client.ipmi_host,
-            username=client.username,
-            password=client.password,
-        )
-    else:
-        logger.warning("Unknown client type for %s: %s", client.name, client.type)
-        return False
-
 
 
 if __name__ == "__main__":

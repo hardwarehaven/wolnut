@@ -1,10 +1,18 @@
 from dataclasses import dataclass, field
+from typing import Union
 import yaml
 import logging
 import os
 import sys
 
-from wolnut.utils import validate_mac_format, resolve_mac_from_host
+from wolnut.client import (
+    BaseClientConfig,
+    create_client_config,
+)
+from wolnut.client import WolClientConfig
+from wolnut.client import IdracClientConfig
+from wolnut.client import IloClientConfig
+from wolnut.client import SmIpmiClientConfig
 
 logger = logging.getLogger("wolnut")
 
@@ -24,17 +32,10 @@ class WakeOnConfig:
     reattempt_delay: int = 30
 
 
-@dataclass
-class ClientConfig:
-    name: str
-    type: str  # e.g., "wol", "idrac", "ilo", "sm_ipmi"
-    host: str
-    ipmi_host: str | None = None
-    mac: str | None = None         # Only for WOL
-    username: str | None = None    # Only for idrac/ilo
-    password: str | None = None
-    verify_ssl: bool = False       # Optional for idrac/ilo
-
+# Tagged union type for all client configurations
+ClientConfig = Union[
+    WolClientConfig, IdracClientConfig, IloClientConfig, SmIpmiClientConfig
+]
 
 
 @dataclass
@@ -46,9 +47,7 @@ class WolnutConfig:
     log_level: str = "INFO"
 
 
-
-def load_config(path: str = None) -> WolnutConfig:
-
+def load_config(path: str | None = None) -> WolnutConfig:
     if path is None:
         # Prefer /config/config.yaml if it exists
         default_path = "/config/config.yaml"
@@ -79,20 +78,9 @@ def load_config(path: str = None) -> WolnutConfig:
     clients = []
     for raw_client in raw["clients"]:
         try:
-            client_type = raw_client.get("type")
-            if client_type == "wol":
-                mac = raw_client.get("mac")
-                if mac == "auto":
-                    logger.info("Resolving MAC for %s at %s...", raw_client['name'], raw_client['host'])
-                    resolved_mac = resolve_mac_from_host(raw_client["host"])
-                    if not resolved_mac:
-                        raise ValueError(f"Could not resolve MAC for {raw_client['name']}")
-                    raw_client["mac"] = resolved_mac
-                    logger.info("MAC for %s: %s", raw_client['name'], resolved_mac)
-                elif not validate_mac_format(mac):
-                    raise ValueError(f"Invalid MAC format for {raw_client['name']}: {mac}")
-
-            clients.append(ClientConfig(**raw_client))
+            client = create_client_config(raw_client)
+            client.post_process()  # Post-process client config
+            clients.append(client)
         except Exception as e:
             logger.error("Failed to load client %s: %s", raw_client.get("name", "?"), e)
 
@@ -101,12 +89,14 @@ def load_config(path: str = None) -> WolnutConfig:
         poll_interval=raw.get("poll_interval", 10),
         wake_on=wake_on,
         clients=clients,
-        log_level=raw.get("log_level", "INFO").upper()
+        log_level=raw.get("log_level", "INFO").upper(),
     )
 
     logger.info("Config Imported Successfully")
     for client in wolnut_config.clients:
-        logger.info("Client: %s at MAC: %s", client.name, client.mac)
+        logger.info(client.description())
+
+    logger.info("WOLnut is ready to go!")
 
     return wolnut_config
 
@@ -119,17 +109,4 @@ def validate_config(raw: dict):
         raise ValueError("Missing required field: 'nut.ups'")
 
     for i, client in enumerate(raw.get("clients", [])):
-        if "name" not in client or "host" not in client or "type" not in client:
-            raise ValueError(f"Client #{i} is missing 'name', 'host', or 'type'")
-        if client["type"] == "wol":
-            if "mac" not in client:
-                raise ValueError(f"WOL client '{client['name']}' is missing 'mac'")
-        elif client["type"] in ["idrac", "ilo", "sm_ipmi"]:
-            for key in ["username", "password"]:
-                if key not in client:
-                    raise ValueError(f"{client['type']} client '{client['name']}' is missing '{key}'")
-            if "ipmi_host" not in client:
-                    raise ValueError(f"Client '{client['name']}' of type {client['type']} must have 'ipmi_host'")
-        else:
-            raise ValueError(f"Unsupported client type: {client['type']}")
-
+        BaseClientConfig.validate_raw(client)

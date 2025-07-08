@@ -25,11 +25,30 @@ clients:
     host: 192.168.0.101             # IP address preferred for reliability
     mac: auto                     # MAC will be resolved using ARP at runtime
 
+  # if no type is provided, it will default to wol for backwards compatibility
+  - name: "Server C"
+    host: 192.168.0.102
+    mac: aa:bb:cc:dd:ee:ff
+
   - name: Dell R740
     type: idrac
     host: server.local            # You can use a hostname if it resolves to a reachable interface
-    ipmi_host: 192.168.0.10
+    ipmi_host: 192.168.0.200
     username: root
     password: calvin
-    verify_ssl: false
+    verify_ssl: true
   
+  - name: Supermicro Server
+    type: sm_ipmi
+    host: 192.168.0.104
+    ipmi_host: 192.168.0.204
+    username: admin
+    password: admin
+
+  - name: HP iLO Server
+    type: ilo
+    host: 192.168.0.105
+    ipmi_host: 192.168.0.205
+    username: admin
+    password: admin
+    verify_ssl: false
