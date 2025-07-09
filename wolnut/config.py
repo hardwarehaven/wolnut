@@ -1,10 +1,19 @@
 from dataclasses import dataclass, field
+from typing import Union
 import yaml
 import logging
 import os
 import sys
 
-from wolnut.utils import validate_mac_format, resolve_mac_from_host
+from wolnut.client import (
+    BaseClientConfig,
+    ClientConfig,
+    create_client_config,
+)
+from wolnut.client import WolClientConfig
+from wolnut.client import IdracClientConfig
+from wolnut.client import IloClientConfig
+from wolnut.client import IpmiClientConfig
 
 logger = logging.getLogger("wolnut")
 
@@ -25,13 +34,6 @@ class WakeOnConfig:
 
 
 @dataclass
-class ClientConfig:
-    name: str
-    host: str
-    mac: str  # "auto" supported
-
-
-@dataclass
 class WolnutConfig:
     nut: NutConfig
     poll_interval: int = 10
@@ -40,8 +42,7 @@ class WolnutConfig:
     log_level: str = "INFO"
 
 
-def load_config(path: str = None) -> WolnutConfig:
-
+def load_config(path: str | None = None) -> WolnutConfig:
     if path is None:
         # Prefer /config/config.yaml if it exists
         default_path = "/config/config.yaml"
@@ -69,35 +70,28 @@ def load_config(path: str = None) -> WolnutConfig:
 
     # LOGGING...
 
-    clients = []
+    clients: list[ClientConfig] = []
     for raw_client in raw["clients"]:
         try:
-            mac = raw_client["mac"]
-            if mac == "auto":
-                logger.info("Resolving MAC for %s at %s...",
-                            raw_client['name'], raw_client['host'])
-                resolved_mac = resolve_mac_from_host(raw_client["host"])
-                if not resolved_mac:
-                    raise ValueError(
-                        f"Could not resolve MAC address for {raw_client['name']} ({raw_client['host']})")
-                raw_client["mac"] = resolved_mac
-                logger.info("MAC for %s: %s", raw_client['name'], resolved_mac)
-
-            clients.append(ClientConfig(**raw_client))
-        except ValueError as e:
-            logger.error("Failed to load client %s: %s",
-                         raw_client.get("name", "?"), e)
+            client = create_client_config(raw_client)
+            client.post_process()  # Post-process client config
+            clients.append(client)
+        except Exception as e:
+            logger.error("Failed to load client %s: %s", raw_client.get("name", "?"), e)
 
     wolnut_config = WolnutConfig(
         nut=nut,
         poll_interval=raw.get("poll_interval", 10),
         wake_on=wake_on,
         clients=clients,
-        log_level=raw.get("log_level", "INFO").upper()
+        log_level=raw.get("log_level", "INFO").upper(),
     )
+
     logger.info("Config Imported Successfully")
     for client in wolnut_config.clients:
-        logger.info("Client: %s at MAC: %s", client.name, client.mac)
+        logger.info(client.description())
+
+    logger.info("WOLnut is ready to go!")
 
     return wolnut_config
 
@@ -109,20 +103,5 @@ def validate_config(raw: dict):
     if "nut" not in raw or "ups" not in raw["nut"]:
         raise ValueError("Missing required field: 'nut.ups'")
 
-    for i, client in enumerate(raw["clients"]):
-        if "name" not in client:
-            raise ValueError(f"Client #{i} is missing required field: 'name'")
-        if "host" not in client:
-            raise ValueError(
-                f"Client '{client.get('name', '?')}' is missing required field: 'host'")
-        if "mac" not in client:
-            raise ValueError(
-                f"Client '{client['name']}' is missing required field: 'mac'")
-
-        mac = client["mac"]
-        if not isinstance(mac, str):
-            raise ValueError(
-                f"Client '{client['name']}' has invalid mac format (should be string or 'auto')")
-        if mac != "auto" and not validate_mac_format(mac):
-            raise ValueError(
-                f"Client '{client['name']}' has invalid MAC address format: {mac}")
+    for i, client in enumerate(raw.get("clients", [])):
+        BaseClientConfig.validate_raw(client)

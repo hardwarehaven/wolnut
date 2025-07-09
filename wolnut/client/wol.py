@@ -19,5 +19,5 @@ def send_wol_packet(mac_address: str, broadcast_ip: str = "255.255.255.255") -> 
         send_magic_packet(mac_address, ip_address=broadcast_ip)
         return True
     except Exception as e:
-        logger.error("Failed to send WOL packet to %s: %s", mac_address, e)
+        logger.error(f"Failed to send WOL packet to {mac_address}: {e}")
         return False
