@@ -10,7 +10,7 @@ import yaml
 from wolnut.client import (
     IdracClientConfig,
     IloClientConfig,
-    SmIpmiClientConfig,
+    IpmiClientConfig,
     WolClientConfig,
 )
 from wolnut.config import NutConfig, WakeOnConfig, WolnutConfig, load_config
@@ -57,7 +57,7 @@ def test_config_loading():
             },
             {
                 "name": "Supermicro Server",
-                "type": "sm_ipmi",
+                "type": "ipmi",
                 "host": "192.168.0.104",
                 "ipmi_host": "192.168.0.204",
                 "username": "admin",
@@ -100,7 +100,7 @@ def test_config_loading():
                 password="calvin",
                 verify_ssl=True,
             ),
-            SmIpmiClientConfig(
+            IpmiClientConfig(
                 name="Supermicro Server",
                 host="192.168.0.104",
                 ipmi_host="192.168.0.204",

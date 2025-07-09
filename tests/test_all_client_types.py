@@ -5,7 +5,7 @@ Comprehensive test for all client types in the tagged union
 from wolnut.client import (
     IdracClientConfig,
     IloClientConfig,
-    SmIpmiClientConfig,
+    IpmiClientConfig,
     WolClientConfig,
 )
 from wolnut.config import create_client_config
@@ -56,16 +56,16 @@ def test_ilo_client():
     assert ilo_client.type == "ilo"
 
 
-def test_sm_ipmi_client():
-    # Test Supermicro IPMI client
-    sm_data = {
-        "name": "Supermicro Server",
-        "type": "sm_ipmi",
+def test_ipmi_client():
+    # Test IPMI client
+    ipmi_data = {
+        "name": "IPMI Server",
+        "type": "ipmi",
         "host": "192.168.1.105",
         "ipmi_host": "192.168.1.106",
         "username": "admin",
         "password": "secret",
     }
-    sm_client = create_client_config(sm_data)
-    assert isinstance(sm_client, SmIpmiClientConfig)
-    assert sm_client.type == "sm_ipmi"
+    ipmi_client = create_client_config(ipmi_data)
+    assert isinstance(ipmi_client, IpmiClientConfig)
+    assert ipmi_client.type == "ipmi"

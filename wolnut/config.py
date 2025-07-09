@@ -13,7 +13,7 @@ from wolnut.client import (
 from wolnut.client import WolClientConfig
 from wolnut.client import IdracClientConfig
 from wolnut.client import IloClientConfig
-from wolnut.client import SmIpmiClientConfig
+from wolnut.client import IpmiClientConfig
 
 logger = logging.getLogger("wolnut")
 

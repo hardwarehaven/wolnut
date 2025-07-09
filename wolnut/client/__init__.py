@@ -1,6 +1,6 @@
 """
 A module defining various client configurations for different types of clients
-such as WOL, iDRAC, iLO, and Supermicro IPMI.
+such as WOL, iDRAC, iLO, and IPMI Host.
 """
 
 import logging
@@ -10,7 +10,7 @@ from typing import Union, override
 
 from wolnut.client.idrac import power_on_idrac_client
 from wolnut.client.ilo import power_on_ilo_client
-from wolnut.client.sm_ipmi import power_on_sm_ipmi_client
+from wolnut.client.ipmi import power_on_ipmi_client
 from wolnut.client.wol import send_wol_packet
 from wolnut.utils import resolve_mac_from_host, validate_mac_format
 
@@ -40,8 +40,8 @@ class BaseClientConfig(ABC):
                 IdracClientConfig._validate_subclass_fields(raw)
             case "ilo":
                 IloClientConfig._validate_subclass_fields(raw)
-            case "sm_ipmi":
-                SmIpmiClientConfig._validate_subclass_fields(raw)
+            case "ipmi":
+                IpmiClientConfig._validate_subclass_fields(raw)
             case unsupported_type:
                 raise ValueError(
                     f"Client {raw['name']} has an unknown or unsupported type: {unsupported_type}"
@@ -235,7 +235,7 @@ class IloClientConfig(BaseClientConfig):
 
 
 @dataclass
-class SmIpmiClientConfig(BaseClientConfig):
+class IpmiClientConfig(BaseClientConfig):
     host: str
     ipmi_host: str
     username: str
@@ -243,38 +243,38 @@ class SmIpmiClientConfig(BaseClientConfig):
 
     @property
     def type(self) -> str:
-        return "sm_ipmi"
+        return "ipmi"
 
     @override
     @classmethod
     def _validate_subclass_fields(cls, raw: dict) -> None:
-        # Validate Supermicro IPMI specific fields
+        # Validate IPMI Host specific fields
         if "host" not in raw or not raw["host"]:
             raise ValueError(
-                f"Supermicro IPMI client '{raw['name']}' is missing required field: host"
+                f"IPMI Host client '{raw['name']}' is missing required field: host"
             )
         if "ipmi_host" not in raw or not raw["ipmi_host"]:
             raise ValueError(
-                f"Supermicro IPMI client '{raw['name']}' is missing required field: ipmi_host"
+                f"IPMI Host client '{raw['name']}' is missing required field: ipmi_host"
             )
         if "username" not in raw or not raw["username"]:
             raise ValueError(
-                f"Supermicro IPMI client '{raw['name']}' is missing required field: username"
+                f"IPMI Host client '{raw['name']}' is missing required field: username"
             )
         if "password" not in raw or not raw["password"]:
             raise ValueError(
-                f"Supermicro IPMI client '{raw['name']}' is missing required field: password"
+                f"IPMI Host client '{raw['name']}' is missing required field: password"
             )
 
     @override
     def send_power_on_signal(self) -> bool:
         """
-        Send a power-on signal to the Supermicro IPMI client.
+        Send a power-on signal to the IPMI Host client.
 
         Returns:
             bool: True if the power-on command was sent successfully, False otherwise.
         """
-        return power_on_sm_ipmi_client(
+        return power_on_ipmi_client(
             self.ipmi_host,
             self.username,
             self.password,
@@ -283,7 +283,7 @@ class SmIpmiClientConfig(BaseClientConfig):
 
 # Tagged union type for all client configurations
 ClientConfig = Union[
-    WolClientConfig, IdracClientConfig, IloClientConfig, SmIpmiClientConfig
+    WolClientConfig, IdracClientConfig, IloClientConfig, IpmiClientConfig
 ]
 
 
@@ -303,7 +303,7 @@ def create_client_config(raw: dict) -> ClientConfig:
             return IdracClientConfig(**raw_copy)
         case "ilo":
             return IloClientConfig(**raw_copy)
-        case "sm_ipmi":
-            return SmIpmiClientConfig(**raw_copy)
+        case "ipmi":
+            return IpmiClientConfig(**raw_copy)
         case _:
             raise ValueError(f"Unknown client type: {client_type}")
