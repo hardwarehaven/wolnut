@@ -7,6 +7,8 @@ from wolnut.wol import send_wol_packet
 
 logger = logging.getLogger("wolnut")
 
+# [ TODO - Issue #24 ] - As much as possible, break up `main()` into a collection of
+#                        smaller methods so that unit tests can be written
 
 def main():
     """MAIN LOOP"""
@@ -65,7 +67,7 @@ def main():
 
             if battery_percent < config.wake_on.min_battery_percent:
                 logger.info(
-                    """Power restored, but battery still below 
+                    """Power restored, but battery still below
                     minimum percentage (%s%%/%s%%). Waiting...""",
                     battery_percent,
                     config.wake_on.min_battery_percent)

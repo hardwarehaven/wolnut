@@ -1,0 +1,56 @@
+name: 🐍 Test application code
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  lint:
+    name: Run PyTests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Lint code
+        continue-on-error: true  # don't block folks just because of code style
+        run: |
+          pip3 install -r requirements.txt
+          cd wolnut/
+          echo '# Formatting Report' | tee -a $GITHUB_STEP_SUMMARY
+          # 'black' prints to stderr for some reason.
+          black --check *.py 2>&1 | tee -a $GITHUB_STEP_SUMMARY
+  test-python:
+    name: Run PyTests
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        os: ["ubuntu-22.04", "ubuntu-latest"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run Tests
+        run: |
+          pip3 install -r requirements.txt
+          cd tests
+          ./run_tests.sh -v --junitxml=pytest.xml
+
+      - name: Publish Test Report (for display in workflow UI)
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: (!cancelled())
+        with:
+          files: "tests/pytest.xml"
+          # remove `comment_mode` or toggle to true to get PR comments detailing the test results.
+          # The docs suggest that this requires `pull-requests: write` permissions.
+          # see: https://github.com/EnricoMi/publish-unit-test-result-action?tab=readme-ov-file#permissions
+          comment_mode: off
