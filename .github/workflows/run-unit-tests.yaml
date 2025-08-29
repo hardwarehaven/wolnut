@@ -3,9 +3,12 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  pull-requests: write # to post/update PR comments
+
 jobs:
   lint:
-    name: Run PyTests
+    name: Lint Code
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -18,13 +21,10 @@ jobs:
       - name: Lint code
         continue-on-error: true  # don't block folks just because of code style
         run: |
-          pip3 install -r requirements.txt
-          cd wolnut/
-          echo '# Formatting Report' | tee -a $GITHUB_STEP_SUMMARY
-          # 'black' prints to stderr for some reason.
-          black --check *.py 2>&1 | tee -a $GITHUB_STEP_SUMMARY
+          script/linting
+
   test-python:
-    name: Run PyTests
+    name: Run Unit Tests & Report Test Coverage
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -39,17 +39,46 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Run Tests
+      - name: Run Tests with Coverage
+        # Run tests on all matrix combinations, except the one that generates the coverage report.
+        if: matrix.python-version != '3.13' || matrix.os != 'ubuntu-latest'
         run: |
-          pip3 install -r requirements.txt
-          cd tests
-          ./run_tests.sh -v --junitxml=pytest.xml
+          script/tests
+
+      - name: Generate Coverage Summary
+        # Run this step on one matrix combination to avoid race conditions when committing the coverage report.
+        if: matrix.python-version == '3.13' && matrix.os == 'ubuntu-latest'
+        run: |
+          script/coverage
+
+      - name: Read coverage summary file
+        id: coverage_summary
+        # Run this step on one matrix combination to avoid race conditions when committing the coverage report.
+        if: matrix.python-version == '3.13' && matrix.os == 'ubuntu-latest'
+        run: |
+          echo "summary<<EOF" >> $GITHUB_OUTPUT
+          cat coverage.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Add coverage summary to PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        # Run this step on one matrix combination to avoid race conditions when committing the coverage report.
+        if: matrix.python-version == '3.13' && matrix.os == 'ubuntu-latest'
+        with:
+          header: test-coverage-summary
+          hide_and_recreate: true
+          hide_classify: "OUTDATED"
+          message: |
+            ### 📝 Test Coverage Summary
+            ```text
+            ${{ steps.coverage_summary.outputs.summary }}
+            ```
 
       - name: Publish Test Report (for display in workflow UI)
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: (!cancelled())
         with:
-          files: "tests/pytest.xml"
+          files: "pytest.xml"
           # remove `comment_mode` or toggle to true to get PR comments detailing the test results.
           # The docs suggest that this requires `pull-requests: write` permissions.
           # see: https://github.com/EnricoMi/publish-unit-test-result-action?tab=readme-ov-file#permissions

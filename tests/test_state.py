@@ -1,11 +1,11 @@
-import state
+from wolnut import state
 
 # [ TODO - Issue #24 ] - These tests aren't really checking much of anything, and should
 #                        just be thought of as a scaffold to write real tests.
 
 
 def test__load_state(mocker):
-    mock_path_exists = mocker.patch("state.os.path.exists")
+    mock_path_exists = mocker.patch("wolnut.state.os.path.exists")
     mock_path_exists.return_value = False
 
     s = state.ClientStateTracker([])

@@ -13,3 +13,8 @@ wolnut_state.json
 
 # Magic packet test
 mp-test.py
+
+# Ignore detail coverage report
+coverage/
+.coverage
+

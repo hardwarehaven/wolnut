@@ -24,3 +24,15 @@ __pycache__/
 .vscode/
 .vscode
 .idea/
+
+# Coverage reports
+pytest.xml
+coverage/
+.coverage
+coverage.xml
+htmlcov/
+
+# pytest code
+tests/
+
+# 

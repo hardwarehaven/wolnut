@@ -31,7 +31,7 @@ class ClientStateTracker:
         self._state_file = state_file
         self._meta_state: Dict[str, Any] = {
             "ups_on_battery": False,
-            "battery_percent_at_shutdown": 100
+            "battery_percent_at_shutdown": 100,
         }
 
         self._client_states: Dict[str, Dict[str, Any]] = {
@@ -40,7 +40,7 @@ class ClientStateTracker:
                 "is_online": False,
                 "wol_sent": False,
                 "wol_sent_at": 0,
-                "skip": False
+                "skip": False,
             }
             for client in clients
         }
@@ -63,10 +63,7 @@ class ClientStateTracker:
             logger.warning("Failed to load state from file: %s", e)
 
     def _save_state(self):
-        save_data = {
-            "meta": self._meta_state,
-            "clients": self._client_states
-        }
+        save_data = {"meta": self._meta_state, "clients": self._client_states}
         try:
             with open(self._state_file, "w") as f:
                 json.dump(save_data, f)
@@ -98,7 +95,9 @@ class ClientStateTracker:
         return self._client_states.get(client_name, {}).get("is_online", False)
 
     def was_online_before_shutdown(self, client_name: str) -> bool:
-        return self._client_states.get(client_name, {}).get("was_online_before_battery", False)
+        return self._client_states.get(client_name, {}).get(
+            "was_online_before_battery", False
+        )
 
     def has_been_wol_sent(self, client_name: str) -> bool:
         return self._client_states.get(client_name, {}).get("wol_sent", False)

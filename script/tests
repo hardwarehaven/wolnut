@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# This script runs the unit tests using pytest and generates a coverage.xml file.
+# It sets up and activates the Python virtual environment before running the tests.
+
+# Find the project root directory.
+if [ -z "${PROJECT_DIR}" ]; then
+    export PROJECT_DIR=$(realpath `dirname "$0"`/..)
+fi
+
+# Remove an existing coverage directory to ensure a clean report.
+if [ -d "${PROJECT_DIR}/coverage" ]; then
+    rm -rf "${PROJECT_DIR}/coverage"
+    mkdir -p "${PROJECT_DIR}/coverage"
+fi
+
+# Set up and activate the Python virtual environment.
+# This will also cd to the project root and install dependencies.
+source "${PROJECT_DIR}/script/setup_env.sh"
+
+# Run pytest with the project directory in the PYTHONPATH so that imports work correctly.
+PYTHONPATH="${PROJECT_DIR}" pytest  -v --junitxml=pytest.xml "$@"

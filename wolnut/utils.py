@@ -27,23 +27,24 @@ def resolve_mac_from_host(host: str) -> str | None:
         host (str): IP or Hostname.
 
     Returns:
-        str | None: The MAC address as a colon-separated string if found, 
+        str | None: The MAC address as a colon-separated string if found,
         otherwise None.
     """
     # Send a ping to ensure the ARP cache is populated
     try:
-        subprocess.run(["ping", "-c", "1", host],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(
+            ["ping", "-c", "1", host],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
     except Exception as e:
         logger.warning("Failed to ping: %s: %s", host, e)
         return None
 
     # Read the ARP table
     try:
-        result = subprocess.run(
-            ["arp", "-n", host], capture_output=True, text=True)
-        match = re.search(
-            r"(([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2})", result.stdout)
+        result = subprocess.run(["arp", "-n", host], capture_output=True, text=True)
+        match = re.search(r"(([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2})", result.stdout)
         if match:
             return match.group(0)
     except Exception as e:

@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# This script provides a convenient way to manually generate a code coverage
+# report in HTML format (coverage/index.html) before committing changes.
+
+# Find the project root directory.
+if [ -z "${PROJECT_DIR}" ]; then
+    export PROJECT_DIR=$(realpath `dirname "$0"`/..)
+fi
+
+echo "▶️  Running tests and generating coverage data..."
+
+# Ensure the virtual environment is active so the `coverage` command is available.
+source "${PROJECT_DIR}/script/setup_env.sh"
+
+# Run tests and generate coverage.xml. We suppress output for a clean run
+test_output="${PROJECT_DIR}/test_output.txt"
+if ! script/tests --cov=wolnut --cov-report=xml:coverage.xml > "${test_output}" 2>&1; then
+    echo "❌ Tests failed. Errors:"
+    cat "${test_output}"
+    rm -f "${test_output}"
+    exit 1
+fi
+rm -f "${test_output}"
+
+echo "📝 Generating coverage summary report..."
+if coverage report > coverage.txt; then
+    echo "✅ Text coverage summary generated."
+fi
+
+if [ -z "$GITHUB_STEP_SUMMARY" ]; then
+    echo "📝 Generating HTML coverage report..."
+    coverage_dir="${PROJECT_DIR}/coverage/"
+    rm -rf "${coverage_dir}" && mkdir -p "${coverage_dir}"
+    if coverage html -d "${coverage_dir}"; then
+        echo "✅ HTML coverage report generated at '${coverage_dir}/index.html'."
+        exit 0
+    else
+        echo "❌ Failed to generate HTML coverage report."
+        exit 1
+    fi
+else
+    cat coverage.txt
+    echo "✅ Coverage summary complete."
+fi
