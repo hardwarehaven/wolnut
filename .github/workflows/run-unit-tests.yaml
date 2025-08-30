@@ -4,7 +4,9 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
+  checks: write
   pull-requests: write # to post/update PR comments
+  contents: read
 
 jobs:
   lint:
