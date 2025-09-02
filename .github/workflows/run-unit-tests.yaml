@@ -13,7 +13,7 @@ jobs:
     name: 🧹 Lint Code
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python 3.13
         uses: actions/setup-python@v5
@@ -39,7 +39,7 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
         os: ["ubuntu-22.04", "ubuntu-24.04"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -67,7 +67,7 @@ jobs:
       actions: write
     needs: test-python
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python 3.13
         uses: actions/setup-python@v5
