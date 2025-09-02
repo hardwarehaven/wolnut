@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# This script cleans up coverage reports and test result files.
+
+if [ -z "${PROJECT_DIR}" ]; then
+    export PROJECT_DIR=$(realpath `dirname "$0"`/..)
+fi
+cd "${PROJECT_DIR}"
+
+rm -rf coverage/
+rm -rf .pytest_cache/
+rm --f .coverage
+rm -f coverage.xml
+rm -f coverage.txt
+rm -f pytest.xml
+
+echo "🧹 Cleaned up coverage reports and test result files."

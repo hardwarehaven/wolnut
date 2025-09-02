@@ -1,11 +1,12 @@
 name: 🐳 Test docker image
 on:
   push:
-    branches-ignore:
-    - "main"
+    branches: ["!main"]
   pull_request:
-    branches-ignore:
-    - "main"
+
+permissions:
+  # Required to read the repository contents for checkout.
+  contents: read
 
 jobs:
   test:

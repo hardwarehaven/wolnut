@@ -12,6 +12,9 @@ logger = logging.getLogger("wolnut")
 @dataclass
 class NutConfig:
     ups: str
+    hostname: str = "localhost"
+    port: int = 3493
+    timeout: int = 5
     username: str | None = None
     password: str | None = None
 
@@ -74,26 +77,29 @@ def load_config(path: str = None) -> WolnutConfig:
         try:
             mac = raw_client["mac"]
             if mac == "auto":
-                logger.info("Resolving MAC for %s at %s...",
-                            raw_client['name'], raw_client['host'])
+                logger.info(
+                    "Resolving MAC for %s at %s...",
+                    raw_client["name"],
+                    raw_client["host"],
+                )
                 resolved_mac = resolve_mac_from_host(raw_client["host"])
                 if not resolved_mac:
                     raise ValueError(
-                        f"Could not resolve MAC address for {raw_client['name']} ({raw_client['host']})")
+                        f"Could not resolve MAC address for {raw_client['name']} ({raw_client['host']})"
+                    )
                 raw_client["mac"] = resolved_mac
-                logger.info("MAC for %s: %s", raw_client['name'], resolved_mac)
+                logger.info("MAC for %s: %s", raw_client["name"], resolved_mac)
 
             clients.append(ClientConfig(**raw_client))
         except ValueError as e:
-            logger.error("Failed to load client %s: %s",
-                         raw_client.get("name", "?"), e)
+            logger.error("Failed to load client %s: %s", raw_client.get("name", "?"), e)
 
     wolnut_config = WolnutConfig(
         nut=nut,
         poll_interval=raw.get("poll_interval", 10),
         wake_on=wake_on,
         clients=clients,
-        log_level=raw.get("log_level", "INFO").upper()
+        log_level=raw.get("log_level", "INFO").upper(),
     )
     logger.info("Config Imported Successfully")
     for client in wolnut_config.clients:
@@ -114,15 +120,19 @@ def validate_config(raw: dict):
             raise ValueError(f"Client #{i} is missing required field: 'name'")
         if "host" not in client:
             raise ValueError(
-                f"Client '{client.get('name', '?')}' is missing required field: 'host'")
+                f"Client '{client.get('name', '?')}' is missing required field: 'host'"
+            )
         if "mac" not in client:
             raise ValueError(
-                f"Client '{client['name']}' is missing required field: 'mac'")
+                f"Client '{client['name']}' is missing required field: 'mac'"
+            )
 
         mac = client["mac"]
         if not isinstance(mac, str):
             raise ValueError(
-                f"Client '{client['name']}' has invalid mac format (should be string or 'auto')")
+                f"Client '{client['name']}' has invalid mac format (should be string or 'auto')"
+            )
         if mac != "auto" and not validate_mac_format(mac):
             raise ValueError(
-                f"Client '{client['name']}' has invalid MAC address format: {mac}")
+                f"Client '{client['name']}' has invalid MAC address format: {mac}"
+            )

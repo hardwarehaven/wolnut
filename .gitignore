@@ -8,6 +8,13 @@ config.yaml
 .vscode/
 .vscode/launch.json
 wolnut_state.json
+**/.pytest_cache
+**/pytest.xml
 
 # Magic packet test
 mp-test.py
+
+# Ignore detail coverage report
+coverage/
+.coverage
+
