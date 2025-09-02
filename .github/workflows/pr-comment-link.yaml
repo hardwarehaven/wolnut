@@ -4,14 +4,12 @@ on:
     workflows: ["🐍 Test application code"]
     types:
       - completed
-
-permissions:
-  checks: write
-  pull-requests: write
-
 jobs:
   publish-test-report:
     name: Publish Test Report
+    permissions:
+      # Required by EnricoMi/publish-unit-test-result-action to create a check run
+      checks: write
     runs-on: ubuntu-latest
     # Only run on pull request triggered workflows
     if: github.event.workflow_run.event == 'pull_request' && github.actor != 'dependabot[bot]'
@@ -29,19 +27,34 @@ jobs:
           files: "test-results/**/*.xml"
           comment_mode: off
 
-  comment-on-success:
-    name: Add Report Link to PR
-    runs-on: ubuntu-latest
-    # Only run on successful pull request workflows that have an associated PR
-    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.pull_requests
 
+  comment-on-pr:
+    name: Add Report Link to PR
+    permissions:
+      # Required by marocchino/sticky-pull-request-comment
+      pull-requests: write
+    runs-on: ubuntu-latest
+    # Only run on pull request workflows that have an associated PR
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.pull_requests && github.actor != 'dependabot[bot]'
     steps:
-      - name: Create PR comment with link to workflow run
+      - name: Create success comment
+        if: github.event.workflow_run.conclusion == 'success'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           number: ${{ github.event.workflow_run.pull_requests[0].number }}
           header: test-report-link
           message: |
             📊 Test and coverage reports are available in the [workflow run summary](${{ github.event.workflow_run.html_url }}).
+
+            Click "Summary" on the left of the workflow run page to see the full report.
+
+      - name: Create problem comment
+        if: github.event.workflow_run.conclusion != 'success'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ github.event.workflow_run.pull_requests[0].number }}
+          header: test-report-link
+          message: |
+            ⚠️ Problems found. Please review the details in the [workflow run summary](${{ github.event.workflow_run.html_url }}).
 
             Click "Summary" on the left of the workflow run page to see the full report.

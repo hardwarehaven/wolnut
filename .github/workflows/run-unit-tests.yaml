@@ -4,14 +4,13 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  checks: write
-  actions: write # to upload artifacts
-  pull-requests: write # to post/update PR comments
+  # Default all jobs to read-only access to the repository contents.
+  # This is sufficient for jobs that only need to check out code.
   contents: read
 
 jobs:
   lint:
-    name: Lint Code
+    name: 🧹 Lint Code
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +26,12 @@ jobs:
           script/linting
 
   test-python:
-    name: Run Unit Tests (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    name: 🧪 Run Unit Tests (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    permissions:
+      # This job needs read access to the repository contents for checkout.
+      contents: read
+      # This job needs write access to actions for uploading artifacts.
+      actions: write
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -54,8 +58,13 @@ jobs:
           path: pytest.xml
 
   analyze-coverage:
-    name: Analyze Coverage
+    name: 📊 Analyze Coverage
     runs-on: ubuntu-24.04
+    permissions:
+      # This job needs read access to the repository contents for checkout.
+      contents: read
+      # This job needs write access to actions for uploading artifacts.
+      actions: write
     needs: test-python
     steps:
       - uses: actions/checkout@v4
