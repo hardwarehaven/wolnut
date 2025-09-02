@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# This script runs the linter (black) to check for code formatting issues.
+
+# Find the project root directory.
+if [ -z "${PROJECT_DIR}" ]; then
+    export PROJECT_DIR=$(realpath `dirname "$0"`/..)
+fi
+source "${PROJECT_DIR}/script/setup_env.sh"
+
+echo "▶️  Running linter for feedback..."
+
+if [ -z "$GITHUB_STEP_SUMMARY" ]; then
+    echo '# Formatting Report'
+    black --check wolnut/ tests/
+else
+    echo '# Formatting Report' | tee -a $GITHUB_STEP_SUMMARY
+    black --check wolnut/ tests/ 2>&1 | tee -a $GITHUB_STEP_SUMMARY
+fi
+
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    echo "❌ Linting issues found. Please run 'black .' to format the code."
+    exit 1
+fi
+echo "✅ No linting issues found."

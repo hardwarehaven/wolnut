@@ -3,9 +3,14 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  # Default all jobs to read-only access to the repository contents.
+  # This is sufficient for jobs that only need to check out code.
+  contents: read
+
 jobs:
   lint:
-    name: Run PyTests
+    name: 🧹 Lint Code
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -18,19 +23,21 @@ jobs:
       - name: Lint code
         continue-on-error: true  # don't block folks just because of code style
         run: |
-          pip3 install -r requirements.txt
-          cd wolnut/
-          echo '# Formatting Report' | tee -a $GITHUB_STEP_SUMMARY
-          # 'black' prints to stderr for some reason.
-          black --check *.py 2>&1 | tee -a $GITHUB_STEP_SUMMARY
+          script/linting
+
   test-python:
-    name: Run PyTests
-    runs-on: ubuntu-24.04
+    name: 🧪 Run Unit Tests (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    permissions:
+      # This job needs read access to the repository contents for checkout.
+      contents: read
+      # This job needs write access to actions for uploading artifacts.
+      actions: write
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
-        os: ["ubuntu-22.04", "ubuntu-latest"]
+        os: ["ubuntu-22.04", "ubuntu-24.04"]
     steps:
       - uses: actions/checkout@v4
 
@@ -41,16 +48,39 @@ jobs:
 
       - name: Run Tests
         run: |
-          pip3 install -r requirements.txt
-          cd tests
-          ./run_tests.sh -v --junitxml=pytest.xml
+          script/tests
 
-      - name: Publish Test Report (for display in workflow UI)
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: (!cancelled())
+      - name: Upload test report
+        if: always() # Upload report even if tests fail
+        uses: actions/upload-artifact@v4
         with:
-          files: "tests/pytest.xml"
-          # remove `comment_mode` or toggle to true to get PR comments detailing the test results.
-          # The docs suggest that this requires `pull-requests: write` permissions.
-          # see: https://github.com/EnricoMi/publish-unit-test-result-action?tab=readme-ov-file#permissions
-          comment_mode: off
+          name: pytest-results-${{ matrix.os }}-${{ matrix.python-version }}
+          path: pytest.xml
+
+  analyze-coverage:
+    name: 📊 Analyze Coverage
+    runs-on: ubuntu-24.04
+    permissions:
+      # This job needs read access to the repository contents for checkout.
+      contents: read
+      # This job needs write access to actions for uploading artifacts.
+      actions: write
+    needs: test-python
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Generate Coverage Report
+        run: |
+          script/coverage
+
+      - name: Upload coverage summary as artifact
+        if: github.actor != 'dependabot[bot]'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-summary
+          path: coverage.txt

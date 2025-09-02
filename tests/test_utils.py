@@ -1,5 +1,6 @@
-import utils
 import subprocess
+
+from wolnut import utils
 
 
 def test_validate_mac_format():
@@ -16,7 +17,7 @@ def test_resolve_mac_from_host(mocker):
     class MockSubprocessResultOkay(object):
         stdout = "de:ad:be:ef:be:ad"
 
-    mock_subprocess_run = mocker.patch("utils.subprocess.run")
+    mock_subprocess_run = mocker.patch("wolnut.utils.subprocess.run")
     mock_subprocess_run.return_value = MockSubprocessResultOkay()
     result = utils.resolve_mac_from_host("localhost")
     assert result == MockSubprocessResultOkay.stdout
