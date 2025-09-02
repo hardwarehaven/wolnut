@@ -21,25 +21,30 @@ if ! script/tests --cov=wolnut --cov-report=xml:coverage.xml > "${test_output}" 
     rm -f "${test_output}"
     exit 1
 fi
+# Output the test results if running in a GitHub Action
+if [ -n "$GITHUB_STEP_SUMMARY" ]; then
+    cat "${test_output}"
+fi
 rm -f "${test_output}"
 
 echo "📝 Generating coverage summary report..."
 if coverage report > coverage.txt; then
     echo "✅ Text coverage summary generated."
-fi
-
-if [ -z "$GITHUB_STEP_SUMMARY" ]; then
-    echo "📝 Generating HTML coverage report..."
-    coverage_dir="${PROJECT_DIR}/coverage/"
-    rm -rf "${coverage_dir}" && mkdir -p "${coverage_dir}"
-    if coverage html -d "${coverage_dir}"; then
-        echo "✅ HTML coverage report generated at '${coverage_dir}/index.html'."
-        exit 0
-    else
-        echo "❌ Failed to generate HTML coverage report."
-        exit 1
-    fi
-else
     cat coverage.txt
     echo "✅ Coverage summary complete."
+fi
+
+if [ -n "$GITHUB_STEP_SUMMARY" ]; then
+    exit 0
+fi
+
+echo "📝 Generating HTML coverage report..."
+coverage_dir="${PROJECT_DIR}/coverage/"
+rm -rf "${coverage_dir}" && mkdir -p "${coverage_dir}"
+if coverage html -d "${coverage_dir}"; then
+    echo "✅ HTML coverage report generated at '${coverage_dir}/index.html'."
+    exit 0
+else
+    echo "❌ Failed to generate HTML coverage report."
+    exit 1
 fi

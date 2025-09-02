@@ -8,12 +8,6 @@ if [ -z "${PROJECT_DIR}" ]; then
     export PROJECT_DIR=$(realpath `dirname "$0"`/..)
 fi
 
-# Remove an existing coverage directory to ensure a clean report.
-if [ -d "${PROJECT_DIR}/coverage" ]; then
-    rm -rf "${PROJECT_DIR}/coverage"
-    mkdir -p "${PROJECT_DIR}/coverage"
-fi
-
 # Set up and activate the Python virtual environment.
 # This will also cd to the project root and install dependencies.
 source "${PROJECT_DIR}/script/setup_env.sh"
