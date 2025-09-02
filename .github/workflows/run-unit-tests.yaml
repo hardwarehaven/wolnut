@@ -5,6 +5,7 @@ on:
 
 permissions:
   checks: write
+  actions: write # to upload artifacts
   pull-requests: write # to post/update PR comments
   contents: read
 
@@ -26,17 +27,13 @@ jobs:
           script/linting
 
   test-python:
-    name: Run Unit Tests
-    runs-on: ubuntu-24.04
+    name: Run Unit Tests (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
-        os: ["ubuntu-22.04", "ubuntu-latest"]
-        include:
-          - python-version: "3.13"
-            os: "ubuntu-latest"
-            is_coverage_job: true
+        os: ["ubuntu-22.04", "ubuntu-24.04"]
     steps:
       - uses: actions/checkout@v4
 
@@ -46,30 +43,35 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Run Tests
-        # Run tests on all matrix combinations, except the one that generates the coverage report.
-        if: ${{ !matrix.is_coverage_job }}
         run: |
           script/tests
 
-      - name: Run Tests and Generate Coverage Summary
-        # Run this step on one matrix combination to avoid race conditions when committing the coverage report.
-        if: ${{ matrix.is_coverage_job }}
+      - name: Upload test report
+        if: always() # Upload report even if tests fail
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results-${{ matrix.os }}-${{ matrix.python-version }}
+          path: pytest.xml
+
+  analyze-coverage:
+    name: Analyze Coverage
+    runs-on: ubuntu-24.04
+    needs: test-python
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Generate Coverage Report
         run: |
           script/coverage
 
       - name: Upload coverage summary as artifact
-        if: ${{ matrix.is_coverage_job }} && github.actor != 'dependabot[bot]'
+        if: github.actor != 'dependabot[bot]'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-summary
           path: coverage.txt
-
-      - name: Publish Test Report (for display in workflow UI)
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: (!cancelled()) && github.actor != 'dependabot[bot]'
-        with:
-          files: "pytest.xml"
-          # remove `comment_mode` or toggle to true to get PR comments detailing the test results.
-          # The docs suggest that this requires `pull-requests: write` permissions.
-          # see: https://github.com/EnricoMi/publish-unit-test-result-action?tab=readme-ov-file#permissions
-          comment_mode: off

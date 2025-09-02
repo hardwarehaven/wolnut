@@ -14,3 +14,6 @@ source "${PROJECT_DIR}/script/setup_env.sh"
 
 # Run pytest with the project directory in the PYTHONPATH so that imports work correctly.
 PYTHONPATH="${PROJECT_DIR}" pytest  -v --junitxml=pytest.xml "$@"
+
+# Always create an empty pytest.xml file if it doesn't exist.
+touch "${PROJECT_DIR}/pytest.xml"

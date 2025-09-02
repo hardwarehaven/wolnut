@@ -15,15 +15,14 @@ source "${PROJECT_DIR}/script/setup_env.sh"
 
 # Run tests and generate coverage.xml. We suppress output for a clean run
 test_output="${PROJECT_DIR}/test_output.txt"
-if ! script/tests --cov=wolnut --cov-report=xml:coverage.xml > "${test_output}" 2>&1; then
+if ! "${PROJECT_DIR}/script/tests" \
+     --cov=wolnut \
+     --cov-report=xml:coverage.xml \
+     --cov-report=term-missing > "${test_output}" 2>&1; then
     echo "❌ Tests failed. Errors:"
     cat "${test_output}"
     rm -f "${test_output}"
     exit 1
-fi
-# Output the test results if running in a GitHub Action
-if [ -n "$GITHUB_STEP_SUMMARY" ]; then
-    cat "${test_output}"
 fi
 rm -f "${test_output}"
 
