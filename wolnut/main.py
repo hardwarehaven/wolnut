@@ -7,8 +7,8 @@ from wolnut.wol import send_wol_packet
 
 logger = logging.getLogger("wolnut")
 
-# [ TODO - Issue #24 ] - As much as possible, break up `main()` into a collection of
-#                        smaller methods so that unit tests can be written
+def get_battery_percent(ups_status):
+    return round(float(ups_status.get("battery.charge", 100)))
 
 
 def main():
@@ -33,13 +33,13 @@ def main():
         state_tracker.reset()
 
     ups_status = get_ups_status(config.nut.ups)
-    battery_percent = int(ups_status.get("battery.charge", 100))
+    battery_percent = get_battery_percent(ups_status)
     power_status = ups_status.get("ups.status", "OL")
     logger.info("UPS power status: %s, Battery: %s%%", power_status, battery_percent)
 
     while True:
         ups_status = get_ups_status(config.nut.ups)
-        battery_percent = int(ups_status.get("battery.charge", 100))
+        battery_percent = get_battery_percent(ups_status)
         power_status = ups_status.get("ups.status", "OL")
 
         logger.debug(
