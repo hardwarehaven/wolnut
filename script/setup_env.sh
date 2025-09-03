@@ -24,6 +24,8 @@ else
     # Create the virtual environment if it doesn't exist.
     if [ ! -d "${VIRTUAL_ENV}" ]; then
         echo "🐍 Creating Python virtual environment in '${VIRTUAL_ENV}'..."
+        # Install uv if not already installed
+        curl -LsSf https://astral.sh/uv/install.sh | sh
         uv venv .venv
     fi
 
