@@ -1,5 +1,5 @@
 # builder
-FROM python:3.11-slim AS builder
+FROM python:3.13-slim AS builder
 COPY --from=ghcr.io/astral-sh/uv:0.7.13 /uv /uvx /bin/
 
 # Pre-compile Python bytecode and COPY packages from wheel.
@@ -14,7 +14,7 @@ WORKDIR /app
 RUN mkdir wolnut && echo '__version__ = "0.0.0"' > wolnut/__init__.py && touch README.md
 
 # Copy dependency files.
-COPY pyproject.toml uv.lock .
+COPY pyproject.toml uv.lock ./
 
 # Init environment and install dependencies.
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-install-project --no-dev
@@ -26,7 +26,7 @@ COPY . .
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev --no-editable
 
 # Runner
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 # Avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
