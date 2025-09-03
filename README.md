@@ -45,3 +45,6 @@ docker run -d \
   --network host \
   hardwarehaven/wolnut:latest
 ```
+
+### Docker Compose
+See [docker-compose.yml](docker-compose.yml) for an example docker compose file
