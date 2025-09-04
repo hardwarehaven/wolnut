@@ -1,11 +1,13 @@
 import json
-import os
-from typing import Dict, Any
 import logging
+import os
 import time
 
+from typing import Dict, Any
+
 logger = logging.getLogger("wolnut")
-logger.setLevel(logging.INFO)
+
+DEFAULT_STATE_FILEPATH = "/app/wolnut_state.json"
 
 
 class ClientStateTracker:
@@ -15,7 +17,7 @@ class ClientStateTracker:
 
     Attributes:
         _clients (list): List of clients being tracked.
-        _state_file (str): Path to the JSON file for persisting state.
+        _status_file (str): Path to the JSON file for persisting state.
         _client_states (dict): Tracks per-client status info.
         _meta_state (dict): Tracks global UPS-related status.
 
@@ -26,9 +28,9 @@ class ClientStateTracker:
         ...
     """
 
-    def __init__(self, clients, state_file: str = "wolnut_state.json"):
+    def __init__(self, clients, status_file: str = DEFAULT_STATE_FILEPATH):
         self._clients = clients
-        self._state_file = state_file
+        self._status_file = status_file
         self._meta_state: Dict[str, Any] = {
             "ups_on_battery": False,
             "battery_percent_at_shutdown": 100,
@@ -47,10 +49,11 @@ class ClientStateTracker:
         self._load_state()
 
     def _load_state(self):
-        if not os.path.exists(self._state_file):
+        if not os.path.exists(self._status_file):
+            logger.warning("State file does not exist, starting without.")
             return
         try:
-            with open(self._state_file, "r") as f:
+            with open(self._status_file, "r") as f:
                 save_data = json.load(f)
 
             self._meta_state.update(save_data["meta"])
@@ -65,7 +68,7 @@ class ClientStateTracker:
     def _save_state(self):
         save_data = {"meta": self._meta_state, "clients": self._client_states}
         try:
-            with open(self._state_file, "w") as f:
+            with open(self._status_file, "w") as f:
                 json.dump(save_data, f)
         except Exception as e:
             logger.warning("Failed to save state to file: %s", e)

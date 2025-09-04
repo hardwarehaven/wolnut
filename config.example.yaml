@@ -7,6 +7,7 @@ nut:
   password: "password"
 
 poll_interval: 15             # Poll interval in seconds — should be shorter than the NUT shutdown delay on any client
+status_file: "/app/wolnut_state.json"  # Path to status file, recommended you change this to be outside container if using Docker
 
 wake_on:
   restore_delay_sec: 30       # Delay (in seconds) after power is restored before sending WOL

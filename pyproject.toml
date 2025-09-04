@@ -5,7 +5,11 @@ readme = "README.md"
 authors = [{ name = "hardwarehaven", email = "hardwarehaven.media@gmail.com" }]
 license = "MIT"
 requires-python = ">=3.11"
-dependencies = ["pyyaml>=6.0.2", "wakeonlan>=3.1.0",]
+dependencies = [
+    "click>=8.2.1",
+    "pyyaml>=6.0.2",
+    "wakeonlan>=3.1.0",
+]
 dynamic = ["version"]
 
 [tool.hatch.version]
@@ -15,7 +19,7 @@ path = "wolnut/__init__.py"
 default-groups = []
 
 [project.scripts]
-wolnut = "wolnut.cli:entrypoint"
+wolnut = "wolnut.cli:wolnut"
 
 [build-system]
 requires = ["hatchling"]
