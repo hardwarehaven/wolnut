@@ -12,10 +12,10 @@ echo "▶️  Running linter for feedback..."
 
 if [ -z "$GITHUB_STEP_SUMMARY" ]; then
     echo '# Formatting Report'
-    black --check wolnut/ tests/
+    uv run black --check wolnut/ tests/
 else
     echo '# Formatting Report' | tee -a $GITHUB_STEP_SUMMARY
-    black --check wolnut/ tests/ 2>&1 | tee -a $GITHUB_STEP_SUMMARY
+    uv run black --check wolnut/ tests/ 2>&1 | tee -a $GITHUB_STEP_SUMMARY
 fi
 
 if [ ${PIPESTATUS[0]} -ne 0 ]; then

@@ -24,18 +24,15 @@ else
     # Create the virtual environment if it doesn't exist.
     if [ ! -d "${VIRTUAL_ENV}" ]; then
         echo "🐍 Creating Python virtual environment in '${VIRTUAL_ENV}'..."
-        python3 -m venv "${VIRTUAL_ENV}"
+        # Install uv if not already installed
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        uv venv .venv
     fi
 
     # Activate the virtual environment.
     source "${VIRTUAL_ENV}/bin/activate"
 
-    echo "🐍 Upgrading pip..."
-    # It's good practice to use the latest pip. Using `python3 -m pip` is the most robust way.
-    python3 -m pip install --upgrade pip --quiet
-
-    echo "📦 Installing/updating dependencies from requirements.txt..."
-    # We are intentionally not suppressing output here to make debugging easier.
-    python3 -m pip install -r "${PROJECT_DIR}/requirements.txt" --quiet
+    echo "🐍 Syncing uv..."
+    uv sync --dev
 
 fi

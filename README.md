@@ -35,7 +35,7 @@ WOLNUT looks for /config/config.yaml on startup.
 mkdir ~/wolnut
 touch config.yaml
 ```
-Then copy the example.config.yaml as a starting point. 
+Then copy the config.example.yaml as a starting point. 
 ### Docker Run
 ```bash
 docker run -d \
@@ -48,3 +48,4 @@ docker run -d \
 
 ### Docker Compose
 See [docker-compose.yml](docker-compose.yml) for an example docker compose file
+

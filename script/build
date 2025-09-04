@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Find the project root directory.
+if [ -z "${PROJECT_DIR}" ]; then
+    export PROJECT_DIR=$(realpath `dirname "$0"`/..)
+fi
+cd "${PROJECT_DIR}"
+
+# Build the docker image
+PLATFORM_INPUT=${1:-"ALL"} # Default to ALL if no platform is specified.
+
+# If a platform was specified as the first argument, shift it off the list.
+if [ -n "$1" ]; then
+    shift
+fi
+
+if [ "${PLATFORM_INPUT}" = "ALL" ]; then
+    PLATFORM="linux/amd64,linux/arm64,linux/arm/v7"
+    LOAD_FLAG="" # Cannot load multi-platform images directly
+else
+    PLATFORM="${PLATFORM_INPUT}"
+    LOAD_FLAG="--load" # Load single-platform images for immediate use
+fi
+
+echo "--- Preparing build environment for ${PLATFORM} ---"
+# Ensure QEMU emulators are set up for cross-platform builds.
+docker run --rm --privileged tonistiigi/binfmt --install all >/dev/null 2>&1
+
+# Create and use a multi-platform capable builder instance.
+BUILDER_NAME="multi-platform-builder"
+if ! docker buildx ls | grep -q "${BUILDER_NAME}" 2>/dev/null; then
+    echo "--- Creating new buildx builder: ${BUILDER_NAME} ---"
+    docker buildx create --name "${BUILDER_NAME}" --driver docker-container --bootstrap --use
+else
+    docker buildx use "${BUILDER_NAME}"
+fi
+
+echo "--- Building for platform ${PLATFORM} ---"
+DOCKER_BUILDKIT=1 docker buildx build --platform "${PLATFORM}" ${LOAD_FLAG} -t wolnut -f Dockerfile . "$@"

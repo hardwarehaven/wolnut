@@ -1,7 +1,4 @@
-import logging
+__version__ = "1.0.0"
+from wolnut.cli import main  # re-export
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
-logger = logging.getLogger("wolnut")
+__all__ = ("main",)

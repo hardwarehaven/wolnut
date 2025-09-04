@@ -1,0 +1,40 @@
+[project]
+name = "wolnut"
+description = "A lightweight service designed to work alongside NUT to automatically send WOL packets to client systems after a power outage."
+readme = "README.md"
+authors = [{ name = "hardwarehaven", email = "hardwarehaven.media@gmail.com" }]
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = ["pyyaml>=6.0.2", "wakeonlan>=3.1.0",]
+dynamic = ["version"]
+
+[tool.hatch.version]
+path = "wolnut/__init__.py"
+
+[tool.uv]
+default-groups = []
+
+[project.scripts]
+wolnut = "wolnut.cli:entrypoint"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+coverage = [
+    "coverage>=7.10.6",
+    "pytest-cov>=6.2.1",
+]
+dev = [
+    {include-group = "lint"},
+    {include-group = "test"},
+    {include-group = "coverage"}
+]
+lint = [
+    "black>=25.1.0",
+]
+test = [
+    "pytest>=8.4.1",
+    "pytest-mock>=3.14.1",
+]
