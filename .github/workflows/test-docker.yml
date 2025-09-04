@@ -1,11 +1,12 @@
 name: 🐳 Test docker image
 on:
   push:
-    branches-ignore:
-    - "main"
+    branches: ["!main"]
   pull_request:
-    branches-ignore:
-    - "main"
+
+permissions:
+  # Required to read the repository contents for checkout.
+  contents: read
 
 jobs:
   test:
@@ -13,7 +14,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        platform: [linux/amd64, linux/arm64]
+        platform: [linux/amd64, linux/arm64, linux/arm/v7]
     steps:
     - name: 🔧 Set up QEMU
       uses: docker/setup-qemu-action@v3
