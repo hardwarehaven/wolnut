@@ -8,9 +8,9 @@ from wolnut import config
 def minimal_config_dict():
     return {
         "nut": {"ups": "ups@localhost"},
-        "clients": [{
-            "name": "client-1", "host": "192.168.1.10", "mac": "DE:AD:BE:EF:00:01"
-        }],
+        "clients": [
+            {"name": "client-1", "host": "192.168.1.10", "mac": "DE:AD:BE:EF:00:01"}
+        ],
     }
 
 
@@ -57,7 +57,9 @@ def test_load_config_minimal(mocker, minimal_config_dict):
     assert cfg.poll_interval == 10  # Default
     assert cfg.wake_on.min_battery_percent == 20  # Default
     assert len(cfg.clients) == 1
-    assert cfg.clients[0].name == "client-1" # This was failing because host was missing
+    assert (
+        cfg.clients[0].name == "client-1"
+    )  # This was failing because host was missing
     assert cfg.log_level == "INFO"  # Default
 
 
@@ -125,7 +127,10 @@ def test_load_config_mac_resolution_fails(mocker, minimal_config_dict):
             "Client 'c1' is missing required field: 'host'",
         ),
         (
-            {"nut": {"ups": "ups"}, "clients": [{"name": "c1", "host": "h1"}]}, # This test is correct
+            {
+                "nut": {"ups": "ups"},
+                "clients": [{"name": "c1", "host": "h1"}],
+            },  # This test is correct
             "Client 'c1' is missing required field: 'mac'",
         ),
         (

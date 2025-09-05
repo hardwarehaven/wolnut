@@ -39,9 +39,7 @@ def test_wolnut_cli_with_config_file_arg(runner, mocker):
 def test_wolnut_cli_with_env_var(runner, mocker):
     """Tests passing a config file via environment variable."""
     mock_main = mocker.patch("wolnut.cli.main")
-    mocker.patch(
-        "wolnut.cli.os.path.exists", return_value=False
-    )  # Ensure default paths aren't found
+    mocker.patch("wolnut.cli.os.path.exists", return_value=False)
 
     result = runner.invoke(
         wolnut,

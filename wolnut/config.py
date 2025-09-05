@@ -47,6 +47,7 @@ class WolnutConfig:
     clients: list[ClientConfig] = field(default_factory=list)
     log_level: str = "INFO"
 
+
 def load_config(
     config_path: str, status_path: str = None, verbose: bool = False
 ) -> Optional[WolnutConfig]:
