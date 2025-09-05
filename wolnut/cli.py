@@ -193,10 +193,6 @@ def wolnut(config_file: str | None, status_file: str | None, verbose: bool) -> i
     )
 
     if config_file is None:
-        if os.environ.get("WOLNUT_CONFIG_FILE") is not None:
-            config_file = os.environ["WOLNUT_CONFIG_FILE"]
-
-    if config_file is None:
         for path in DEFAULT_CONFIG_FILEPATHS:
             if os.path.exists(path):
                 config_file = path
