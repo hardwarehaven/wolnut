@@ -1,4 +1,6 @@
-from wolnut.cli import entrypoint
+import sys
+
+from wolnut.cli import wolnut
 
 if __name__ == "__main__":
-    entrypoint()
+    wolnut()

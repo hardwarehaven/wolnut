@@ -32,7 +32,8 @@ else
     # Activate the virtual environment.
     source "${VIRTUAL_ENV}/bin/activate"
 
-    echo "🐍 Syncing uv..."
+    echo "🐍 Installing dependencies with uv..."
     uv sync --dev
+    uv pip install -e .
 
 fi

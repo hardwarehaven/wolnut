@@ -1,6 +1,9 @@
-import time
+import click
 import logging
-from wolnut.config import load_config
+import os
+import time
+
+from wolnut.config import load_config, DEFAULT_CONFIG_FILEPATHS
 from wolnut.state import ClientStateTracker
 from wolnut.monitor import get_ups_status, is_client_online
 from wolnut.wol import send_wol_packet
@@ -12,9 +15,11 @@ def get_battery_percent(ups_status):
     return round(float(ups_status.get("battery.charge", 100)))
 
 
-def main():
+def main(config_file: str, status_file: str, verbose: bool = False) -> int:
     """MAIN LOOP"""
-    config = load_config()
+    config = load_config(config_file, status_path=status_file, verbose=verbose)
+    if not config:
+        return 1
 
     logger.setLevel(config.log_level)
     logger.info("WOLNUT started. Monitoring UPS: %s", config.nut.ups)
@@ -27,7 +32,7 @@ def main():
     restoration_event_start = None
     wol_being_sent = False
 
-    state_tracker = ClientStateTracker(config.clients)
+    state_tracker = ClientStateTracker(config.clients, status_file=config.status_file)
     if state_tracker.was_ups_on_battery():
         logger.info("WOLNUT is resuming from a UPS battery event")
         restoration_event = True
@@ -169,10 +174,35 @@ def main():
             time.sleep(2)
 
 
-def entrypoint():
+@click.command()
+@click.option(
+    "--config-file",
+    envvar="WOLNUT_CONFIG_FILE",
+    help="The configuration filepath to load. Can also be set with WOLNUT_CONFIG_FILE env var.",
+)
+@click.option(
+    "--status-file",
+    envvar="WOLNUT_STATUS_FILE",
+    help="The status filepath to load. Can also be set with WOLNUT_STATUS_FILE env var.",
+)
+@click.option("--verbose", is_flag=True, help="Enable verbose logging")
+def wolnut(config_file: str | None, status_file: str | None, verbose: bool) -> int:
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
     )
 
-    return main()
+    if config_file is None:
+        for path in DEFAULT_CONFIG_FILEPATHS:
+            if os.path.exists(path):
+                config_file = path
+                break
+        if config_file is None:
+            click.echo(
+                "No config file found. Checked default paths and WOLNUT_CONFIG_FILE env var."
+            )
+            raise click.Abort()
+
+    if not main(config_file, status_file, verbose):
+        click.Abort()
+    return 0

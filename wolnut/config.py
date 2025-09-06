@@ -1,18 +1,22 @@
-from dataclasses import dataclass, field
-import yaml
 import logging
 import os
 import sys
+import yaml
 
+from dataclasses import dataclass, field
+from typing import Optional
+
+from wolnut.state import DEFAULT_STATE_FILEPATH
 from wolnut.utils import validate_mac_format, resolve_mac_from_host
 
 logger = logging.getLogger("wolnut")
+
+DEFAULT_CONFIG_FILEPATHS = ["/config/config.yaml", "./config.yaml"]
 
 
 @dataclass
 class NutConfig:
     ups: str
-    hostname: str = "localhost"
     port: int = 3493
     timeout: int = 5
     username: str | None = None
@@ -37,32 +41,26 @@ class ClientConfig:
 @dataclass
 class WolnutConfig:
     nut: NutConfig
+    status_file: str
     poll_interval: int = 10
     wake_on: WakeOnConfig = field(default_factory=WakeOnConfig)
     clients: list[ClientConfig] = field(default_factory=list)
     log_level: str = "INFO"
 
 
-def load_config(path: str = None) -> WolnutConfig:
-
-    if path is None:
-        # Prefer /config/config.yaml if it exists
-        default_path = "/config/config.yaml"
-        if os.path.exists(default_path):
-            path = default_path
-        else:
-            path = "config.yaml"
-
+def load_config(
+    config_path: str, status_path: str = None, verbose: bool = False
+) -> Optional[WolnutConfig]:
     try:
-        with open(path, "r") as f:
+        with open(config_path, "r") as f:
             raw = yaml.safe_load(f)
         validate_config(raw)
     except FileNotFoundError:
-        logger.error("Config file not found at '%s'.", path)
-        sys.exit(1)
-    except Exception as e:
-        logger.error("Failed to load or parse config file: %s", e)
-        sys.exit(1)
+        logger.error("Config file not found at '%s'.", config_path)
+        return None
+    except Exception:
+        logger.exception("Failed to load or parse config file: '%s'.\n", config_path)
+        return None
 
     # LOGGING...
     nut = NutConfig(**raw["nut"])
@@ -70,7 +68,8 @@ def load_config(path: str = None) -> WolnutConfig:
     # get wake_on or use defaults
     wake_on = WakeOnConfig(**raw.get("wake_on", {}))
 
-    # LOGGING...
+    if status_path is None:
+        status_path = raw.get("status_file", DEFAULT_STATE_FILEPATH)
 
     clients = []
     for raw_client in raw["clients"]:
@@ -100,6 +99,7 @@ def load_config(path: str = None) -> WolnutConfig:
         wake_on=wake_on,
         clients=clients,
         log_level=raw.get("log_level", "INFO").upper(),
+        status_file=status_path,
     )
     logger.info("Config Imported Successfully")
     for client in wolnut_config.clients:
@@ -114,6 +114,9 @@ def validate_config(raw: dict):
 
     if "nut" not in raw or "ups" not in raw["nut"]:
         raise ValueError("Missing required field: 'nut.ups'")
+
+    if "status_file" not in raw:
+        logger.warning("No 'status_file' specified in config, using default.")
 
     for i, client in enumerate(raw["clients"]):
         if "name" not in client:

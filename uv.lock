@@ -323,6 +323,7 @@ wheels = [
 name = "wolnut"
 source = { editable = "." }
 dependencies = [
+    { name = "click" },
     { name = "pyyaml" },
     { name = "wakeonlan" },
 ]
@@ -349,6 +350,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "click", specifier = ">=8.2.1" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "wakeonlan", specifier = ">=3.1.0" },
 ]
