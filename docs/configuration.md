@@ -23,10 +23,10 @@ The interval in seconds at which `wolnut` checks the status of the UPS and clien
 
 ### `status_file`
 
-The file path where `wolnut` will store its state. This allows the service to resume its logic after a restart. It's highly recommended to map this file to a persistent volume when using Docker.
+The file path where `wolnut` will store its state. This allows the service to resume its logic after a restart. It's highly recommended to map this file to a persistent writeable volume when using Docker.
 
 -   **Type**: `string`
--   **Default**: `"/app/wolnut_state.json"`
+-   **Default**: `"/config/wolnut_state.json"`
 
 ---
 
@@ -35,7 +35,7 @@ The file path where `wolnut` will store its state. This allows the service to re
 Configuration for connecting to your NUT (Network UPS Tools) server.
 
 -   `ups`: **(Required)** The name and address of the UPS to monitor.
-    -   **Format**: `<ups-name>@<hostname-or-ip>`
+    -   **Format**: `<ups-name>`, supports deprecated `<ups-name>@<hostname>` for backward compatibilty.
 -   `hostname`: The hostname of the NUT server. Defaults to `localhost`.
 -   `port`: The port of the NUT server. Defaults to `3493`.
 -   `username`: The username for authenticating with the NUT server (optional).
@@ -69,6 +69,7 @@ Each item in the list is an object with the following properties:
 -   `mac`: **(Required)** The MAC address of the client's network interface.
     -   **Value**: Can be a standard MAC address string (e.g., `"DE:AD:BE:EF:00:01"`) or `"auto"`.
     -   If set to `"auto"`, `wolnut` will attempt to resolve the MAC address at startup using an ARP lookup based on the `host`.
+
 
 ### Example `clients` block:
 

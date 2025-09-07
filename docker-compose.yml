@@ -6,5 +6,5 @@ services:
         network_mode: host
         restart: unless-stopped
         volumes:
-            - ./config.yaml:/config/config.yaml
+            - ~/wolnut:/config
 
