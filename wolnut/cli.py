@@ -176,6 +176,8 @@ def main(config_file: str, status_file: str, verbose: bool = False) -> int:
             recorded_down_clients.clear()
             recorded_up_clients.clear()
 
+        state_tracker.save_state()
+
         if not on_battery:
             time.sleep(config.poll_interval)
         else:

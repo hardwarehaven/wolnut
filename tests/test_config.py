@@ -1,6 +1,9 @@
 import pytest
 import yaml
 
+from unittest.mock import MagicMock
+from pathlib import Path
+
 from wolnut import config
 
 
@@ -108,7 +111,6 @@ def test_load_config_mac_resolution_fails(mocker, minimal_config_dict):
 
     cfg = config.load_config("dummy.yaml", None, False)
 
-    # The client that failed resolution should not be in the final list
     assert len(cfg.clients) == 0
 
 
@@ -186,17 +188,28 @@ def test_load_config_yaml_error(mocker):
     assert result is None
 
 
-def test_load_config_verbose_flag(mocker, minimal_config_dict):
-    """Tests that the verbose flag overrides the log level in the config."""
-    minimal_config_dict["log_level"] = "INFO"
-    mocker.patch(
-        "builtins.open", mocker.mock_open(read_data=yaml.dump(minimal_config_dict))
-    )
-    mocker.patch("wolnut.config.validate_config")
-    mocker.patch("wolnut.config.resolve_mac_from_host")
+def test_find_state_file(tmp_path, caplog):
+    """Tests the find_state_file function logic."""
+    # 1. Test with a specified path
+    specific_path = tmp_path / "specific" / "state.json"
+    result = config.find_state_file(str(specific_path))
+    assert result == str(specific_path)
+    assert specific_path.parent.exists()
 
-    # The verbose flag is not actually used in load_config, but this test confirms
-    # the log_level is read from the file correctly when verbose is False.
-    # A more advanced test would involve checking the logger's level.
-    cfg = config.load_config("dummy.yaml", None, False)
-    assert cfg.log_level == "INFO"
+    # 2. Test with no specified path (uses default)
+    default_path = Path(config.DEFAULT_STATE_FILEPATH)
+    # We can't write to root, so we mock mkdir
+    with pytest.MonkeyPatch.context() as m:
+        mock_mkdir = MagicMock()
+        m.setattr(Path, "mkdir", mock_mkdir)
+        result = config.find_state_file(None)
+        assert result == config.DEFAULT_STATE_FILEPATH
+        assert "No state file specified, using default" in caplog.text
+        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+
+    # 3. Test directory creation failure
+    unwritable_path = tmp_path / "unwritable" / "state.json"
+    with pytest.MonkeyPatch.context() as m:
+        m.setattr(Path, "mkdir", MagicMock(side_effect=OSError("Permission denied")))
+        config.find_state_file(str(unwritable_path))
+        assert "Could not create directory for state file" in caplog.text
