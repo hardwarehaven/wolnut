@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 import yaml
 
 from dataclasses import dataclass, field
@@ -12,6 +11,7 @@ from wolnut.utils import validate_mac_format, resolve_mac_from_host
 logger = logging.getLogger("wolnut")
 
 DEFAULT_CONFIG_FILEPATHS = ["/config/config.yaml", "./config.yaml"]
+DEFAULT_LOG_LEVEL = "INFO"
 
 
 @dataclass
@@ -98,7 +98,7 @@ def load_config(
         poll_interval=raw.get("poll_interval", 10),
         wake_on=wake_on,
         clients=clients,
-        log_level=raw.get("log_level", "INFO").upper(),
+        log_level=raw.get("log_level", DEFAULT_LOG_LEVEL).upper(),
         status_file=status_path,
     )
     logger.info("Config Imported Successfully")
