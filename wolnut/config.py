@@ -1,9 +1,8 @@
 import logging
-import os
-import sys
 import yaml
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional
 
 from wolnut.state import DEFAULT_STATE_FILEPATH
@@ -12,6 +11,7 @@ from wolnut.utils import validate_mac_format, resolve_mac_from_host
 logger = logging.getLogger("wolnut")
 
 DEFAULT_CONFIG_FILEPATHS = ["/config/config.yaml", "./config.yaml"]
+DEFAULT_LOG_LEVEL = "INFO"
 
 
 @dataclass
@@ -48,6 +48,22 @@ class WolnutConfig:
     log_level: str = "INFO"
 
 
+def find_state_file(state_file: Optional[str] = None) -> str:
+    """Find an existing state file or return a writable default path."""
+    path = Path(state_file or DEFAULT_STATE_FILEPATH)
+    if not state_file:
+        logger.warning("No state file specified, using default: %s", path)
+
+    # Ensure the parent directory exists
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        logger.error("Could not create directory for state file '%s': %s", path, e)
+        # Depending on desired behavior, you might want to exit or raise here.
+
+    return str(path)
+
+
 def load_config(
     config_path: str, status_path: str = None, verbose: bool = False
 ) -> Optional[WolnutConfig]:
@@ -68,8 +84,10 @@ def load_config(
     # get wake_on or use defaults
     wake_on = WakeOnConfig(**raw.get("wake_on", {}))
 
-    if status_path is None:
-        status_path = raw.get("status_file", DEFAULT_STATE_FILEPATH)
+    # Determine status file path: CLI arg > config file > default
+    final_status_path = status_path or raw.get("status_file")
+    # find_state_file will handle None and also ensure the directory exists
+    final_status_path = find_state_file(final_status_path)
 
     clients = []
     for raw_client in raw["clients"]:
@@ -98,8 +116,8 @@ def load_config(
         poll_interval=raw.get("poll_interval", 10),
         wake_on=wake_on,
         clients=clients,
-        log_level=raw.get("log_level", "INFO").upper(),
-        status_file=status_path,
+        log_level=raw.get("log_level", DEFAULT_LOG_LEVEL).upper(),
+        status_file=final_status_path,
     )
     logger.info("Config Imported Successfully")
     for client in wolnut_config.clients:

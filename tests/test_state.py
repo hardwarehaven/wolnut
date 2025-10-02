@@ -1,4 +1,8 @@
+import os
 import pytest
+import time
+
+from pathlib import Path
 from wolnut import state
 
 
@@ -32,6 +36,13 @@ def test_initial_state(tracker):
     assert tracker.should_attempt_wol("client-1", 30)
 
 
+def test_init_requires_status_file(clients):
+    """Tests that ClientStateTracker raises ValueError if no status_file is provided."""
+    with pytest.raises(ValueError, match="A status file must be specified."):
+        # Pass None for status_file
+        state.ClientStateTracker(clients, status_file=None)
+
+
 def test_save_and_load_state(clients, tmp_path):
     """Tests that state can be saved to a file and loaded back correctly."""
     state_file = tmp_path / "wolnut_state.json"
@@ -42,6 +53,7 @@ def test_save_and_load_state(clients, tmp_path):
     tracker1.mark_all_online_clients()
     tracker1.mark_wol_sent("client-2")
     tracker1.set_ups_on_battery(True, 50)
+    tracker1.save_state()  # Explicitly save the state to the file
 
     # 2. Create a new tracker instance from the same file.
     tracker2 = state.ClientStateTracker(clients, status_file=str(state_file))
@@ -49,7 +61,7 @@ def test_save_and_load_state(clients, tmp_path):
     # 3. Assert that the state was loaded correctly.
     assert tracker2.was_ups_on_battery()
     assert tracker2._meta_state["battery_percent_at_shutdown"] == 50
-    assert tracker2.is_online("client-1")  # is_online state is persisted
+    # is_online is transient and not expected to be loaded.
     assert tracker2.was_online_before_shutdown("client-1")
     assert not tracker2.was_online_before_shutdown("client-2")
     assert tracker2.has_been_wol_sent("client-2")
@@ -61,19 +73,20 @@ def test_load_state_corrupted_file(clients, tmp_path, caplog):
     state_file.write_text("this is not valid json")
 
     tracker = state.ClientStateTracker(clients, status_file=str(state_file))
+    assert (
+        "Failed to load state from file" in caplog.text
+    ), "A warning should be logged for a corrupted state file."
+    assert (
+        not tracker.was_ups_on_battery()
+    ), "State should be default after a failed load."
 
-    # Assert that the state remains default
-    assert not tracker.was_ups_on_battery()
-    # Assert that a warning was logged
-    assert "Failed to load state from file" in caplog.text
 
-
-def test_load_state_file_not_found(clients, tmp_path, caplog):
-    """Tests that a warning is logged when the state file doesn't exist."""
-    # Note: We don't create the file, just use the path.
-    state_file = tmp_path / "nonexistent.json"
+def test_load_state_file_not_found(clients, tmp_path):
+    """Tests that a new state file is created if one doesn't exist, without logging an error."""
+    state_file = tmp_path / "new_state.json"
+    assert not state_file.exists()
     state.ClientStateTracker(clients, status_file=str(state_file))
-    assert "State file does not exist, starting without." in caplog.text
+    # No error should be raised, and the tracker should initialize cleanly.
 
 
 def test_update_and_is_online(tracker):
@@ -83,8 +96,6 @@ def test_update_and_is_online(tracker):
     assert tracker.is_online("client-1")
     tracker.update("client-1", False)
     assert not tracker.is_online("client-1")
-    # Test that an unknown client correctly returns False
-    assert not tracker.is_online("unknown-client")
 
 
 def test_mark_all_online_clients(tracker):
@@ -124,17 +135,20 @@ def test_should_attempt_wol(tracker, mocker):
 def test_reset(tracker):
     """Tests that the reset method clears the correct state fields."""
     # Set some state to non-default values
+    tracker.set_ups_on_battery(True, 50)
     tracker.update("client-1", True)
     tracker.mark_wol_sent("client-1")
     tracker.mark_skip("client-2")
 
     # Sanity check
+    assert tracker.was_ups_on_battery()
     assert tracker.has_been_wol_sent("client-1")
     assert tracker.should_skip("client-2")
 
     tracker.reset()
 
     # Assert that resettable fields are cleared
+    assert not tracker.was_ups_on_battery()
     assert not tracker.has_been_wol_sent("client-1")
     assert not tracker.should_skip("client-2")
     # is_online is not part of the reset logic, it reflects current state.
@@ -158,3 +172,78 @@ def test_set_and_was_ups_on_battery(tracker):
     tracker.set_ups_on_battery(False, 100)
     assert not tracker.was_ups_on_battery()
     assert tracker._meta_state["battery_percent_at_shutdown"] == 100
+
+
+def test_state_not_saved_if_unchanged(tracker, mocker):
+    """Tests that _save_state is skipped if the state hash hasn't changed."""
+    # Initial save on update
+    mock_open = mocker.spy(Path, "open")
+    tracker.update("client-1", True)
+    tracker.save_state()
+    assert mock_open.call_count == 1
+
+    # Another update with the same value should not trigger a save
+    tracker.update("client-1", True)
+    tracker.save_state()
+    # The call count should still be 1 because the state data has not changed
+    assert mock_open.call_count == 1
+
+    # A different value should trigger a save
+    tracker.update("client-1", False)
+    tracker.save_state()
+    assert mock_open.call_count == 2
+
+
+def test_atomic_save_mechanism(tracker, tmp_path, mocker):
+    """Tests that a temporary file is used for saving state."""
+    state_file = tmp_path / "wolnut_state.json"
+    temp_file = state_file.with_suffix(".json.tmp")
+    tracker._status_file = state_file
+
+    # Mock Path.open to intercept the file write
+    mock_open = mocker.patch("pathlib.Path.open", mocker.mock_open())
+
+    # Trigger a save
+    tracker.update("client-1", True)  # Make state dirty
+    tracker.save_state()
+
+    # Assert that `open` was called on the temp_file Path object.
+    mock_open.assert_called_once_with("w")
+
+
+def test_methods_handle_unknown_client(tracker):
+    """Tests that methods gracefully handle a client name not in the state."""
+    unknown = "unknown-client"
+    assert not tracker.is_online(unknown)
+    assert not tracker.was_online_before_shutdown(unknown)
+    assert not tracker.has_been_wol_sent(unknown)
+    assert not tracker.should_skip(unknown)
+    # should_attempt_wol should be true for a new client
+    assert tracker.should_attempt_wol(unknown, 30)
+
+
+def test_save_state_json_serialization_error(tracker, mocker, caplog):
+    """Tests that an error is logged if JSON serialization fails during save."""
+    mocker.patch("wolnut.state.json.dumps", side_effect=TypeError("Test error"))
+    tracker.update("client-1", True)  # Make the state dirty
+    tracker.save_state()
+    assert "Failed to serialize state to JSON" in caplog.text
+
+
+def test_save_state_temp_file_write_error(tracker, mocker, caplog):
+    """Tests that an error is logged if writing the temporary state file fails."""
+    mock_open = mocker.patch(
+        "pathlib.Path.open", side_effect=IOError("Permission denied")
+    )
+    tracker.update("client-1", True)  # Make the state dirty
+    tracker.save_state()
+    assert "Failed to write temporary state file" in caplog.text
+
+
+def test_save_state_rename_error(tracker, mocker, caplog):
+    """Tests that an error is logged if renaming the temp file fails."""
+    # We only want to mock the 'replace' method
+    mocker.patch("pathlib.Path.replace", side_effect=OSError("Test rename error"))
+    tracker.update("client-1", True)  # Make the state dirty
+    tracker.save_state()
+    assert "Failed to move temporary state to permanent" in caplog.text

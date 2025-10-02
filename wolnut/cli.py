@@ -11,6 +11,14 @@ from wolnut.wol import send_wol_packet
 logger = logging.getLogger("wolnut")
 
 
+def configure_logger(level: str):
+    """
+    Configures the root logger's level.
+    Needed for unit testing since logging.basicConfig is a no-op if the root logger already has handlers.
+    """
+    logger.setLevel(level)
+
+
 def get_battery_percent(ups_status):
     return round(float(ups_status.get("battery.charge", 100)))
 
@@ -21,7 +29,7 @@ def main(config_file: str, status_file: str, verbose: bool = False) -> int:
     if not config:
         return 1
 
-    logger.setLevel(config.log_level)
+    configure_logger(config.log_level)
     logger.info("WOLNUT started. Monitoring UPS: %s", config.nut.ups)
 
     on_battery = False
@@ -168,6 +176,8 @@ def main(config_file: str, status_file: str, verbose: bool = False) -> int:
             recorded_down_clients.clear()
             recorded_up_clients.clear()
 
+        state_tracker.save_state()
+
         if not on_battery:
             time.sleep(config.poll_interval)
         else:
@@ -187,10 +197,14 @@ def main(config_file: str, status_file: str, verbose: bool = False) -> int:
 )
 @click.option("--verbose", is_flag=True, help="Enable verbose logging")
 def wolnut(config_file: str | None, status_file: str | None, verbose: bool) -> int:
+    """A service to send Wake-on-LAN packets to clients after a power outage."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
     )
+
+    if verbose:
+        configure_logger("DEBUG")
 
     if config_file is None:
         for path in DEFAULT_CONFIG_FILEPATHS:
@@ -203,6 +217,7 @@ def wolnut(config_file: str | None, status_file: str | None, verbose: bool) -> i
             )
             raise click.Abort()
 
-    if not main(config_file, status_file, verbose):
-        click.Abort()
-    return 0
+    exit_code = main(config_file, status_file, verbose)
+    if exit_code != 0:
+        # main() will log the specific error, so we just abort.
+        raise click.Abort()

@@ -27,25 +27,11 @@ This helps reboot systems automatically after a controlled shutdown caused by a 
 
 ---
 
-## Docker
+## Quickstart
 
-WOLNUT looks for /config/config.yaml on startup. 
-
-```bash
-mkdir ~/wolnut
-touch config.yaml
-```
-Then copy the config.example.yaml as a starting point. 
-### Docker Run
-```bash
-docker run -d \
-  --name wolnut \
-  --restart unless-stopped \
-  -v ~/wolnut:/config \
-  --network host \
-  hardwarehaven/wolnut:latest
-```
+See the [Quickstart](docs/quickstart.md) guide.
 
 ### Docker Compose
+
 See [docker-compose.yml](docker-compose.yml) for an example docker compose file
 
