@@ -2,7 +2,7 @@
 # This stage prepares the `uv` executable in a way that is compatible with all target architectures.
 # It starts from a universal python base image to avoid platform-related `FROM` errors.
 ARG UV_VERSION=0.7.13
-FROM --platform=${TARGETPLATFORM} python:3.13-slim AS uv-builder
+FROM --platform=${TARGETPLATFORM} python:3.14-slim AS uv-builder
 
 ARG UV_VERSION
 ARG TARGETARCH # This is used by the script for logging.
@@ -14,7 +14,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     chmod +x /install-uv.sh && /install-uv.sh
 
 # builder stage
-FROM --platform=${TARGETPLATFORM} python:3.13-slim AS builder
+FROM --platform=${TARGETPLATFORM} python:3.14-slim AS builder
 
 # Pre-compile Python bytecode and COPY packages from wheel.
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
@@ -44,7 +44,7 @@ COPY . .
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev --no-editable
 
 # Runner
-FROM --platform=${TARGETPLATFORM} python:3.13-slim AS runner
+FROM --platform=${TARGETPLATFORM} python:3.14-slim AS runner
 
 # Avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
