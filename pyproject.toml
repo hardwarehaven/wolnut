@@ -9,7 +9,7 @@ dependencies = [
     "click>=8.2.1",
     "pyyaml>=6.0.2",
     "wakeonlan>=3.1.0",
-    "PyNUTClient>=2.4.2",
+    "PyNUTClient>=2.8.4",
 ]
 dynamic = ["version"]
 
