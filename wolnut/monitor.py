@@ -1,41 +1,60 @@
-import subprocess
 import logging
 import platform
-from typing import Optional
+import subprocess
+from typing import TYPE_CHECKING
+
+try:
+    from PyNUT import PyNUTClient, PyNUTError
+except ImportError:
+    PyNUTClient = None
+    PyNUTError = Exception
+
+if TYPE_CHECKING:
+    from wolnut.config import NutConfig
 
 logger = logging.getLogger("wolnut")
 
 
-def get_ups_status(
-    ups_name: str, username: Optional[str] = None, password: Optional[str] = None
-) -> dict:
-    env = None
+def get_ups_status(nut_config: "NutConfig") -> dict:
+    """
+    Get UPS status using PyNUTClient.
 
-    if username and password:
-        env = {**subprocess.os.environ, "USERNAME": username, "PASSWORD": password}
+    Args:
+        nut_config: NutConfig object containing connection details
+
+    Returns:
+        Dictionary of UPS variables (str -> str), or empty dict on error
+    """
+    if PyNUTClient is None:
+        logger.error("PyNUTClient is not available. Please install: pip install PyNUTClient")
+        return {}
 
     try:
-        result = subprocess.run(
-            ["upsc", ups_name],
-            capture_output=True,
-            text=True,
-            env=env,
-            timeout=5,
-            check=False,
+        # Connect to NUT server
+        client = PyNUTClient(
+            host=nut_config.host,
+            port=nut_config.port,
+            login=nut_config.username,
+            password=nut_config.password,
+            timeout=nut_config.timeout
         )
 
-        if result.returncode != 0:
-            logger.error("upsc returned error: %s", result.stderr.strip())
-            return {}
+        # Get all variables for the UPS
+        raw_vars = client.GetUPSVars(nut_config.ups)
 
+        # Convert byte strings to regular strings (Python 3 compatibility)
         status = {}
-        for line in result.stdout.splitlines():
-            if ":" in line:
-                key, value = line.split(":", 1)
-                status[key.strip()] = value.strip()
+        for key, value in raw_vars.items():
+            # Decode bytes to strings
+            str_key = key.decode('utf-8') if isinstance(key, bytes) else key
+            str_value = value.decode('utf-8') if isinstance(value, bytes) else value
+            status[str_key] = str_value
 
         return status
 
+    except PyNUTError as e:
+        logger.error("PyNUT error: %s", e)
+        return {}
     except Exception as e:
         logger.error("Failed to get UPS status: %s", e)
         return {}

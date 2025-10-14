@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 from pathlib import Path
 
 from wolnut import config
+from wolnut.config import parse_ups_identifier
 
 
 @pytest.fixture
@@ -56,7 +57,8 @@ def test_load_config_minimal(mocker, minimal_config_dict):
 
     cfg = config.load_config("dummy_path.yaml", None, False)
 
-    assert cfg.nut.ups == "ups@localhost"
+    assert cfg.nut.ups == "ups"  # Parsed from "ups@localhost"
+    assert cfg.nut.host == "localhost"
     assert cfg.poll_interval == 10  # Default
     assert cfg.wake_on.min_battery_percent == 20  # Default
     assert len(cfg.clients) == 1
@@ -81,7 +83,9 @@ def test_load_config_full(mocker, full_config_dict):
     assert cfg.log_level == "DEBUG"
     assert cfg.poll_interval == 5
     assert cfg.status_file == "/data/status.json"
-    assert cfg.nut.ups == "myups@nut-server"
+    assert cfg.nut.ups == "myups"  # Parsed from "myups@nut-server"
+    assert cfg.nut.host == "nut-server"
+    assert cfg.nut.port == 1234  # From config
     assert cfg.nut.username == "monuser"
     assert cfg.wake_on.restore_delay_sec == 60
     assert cfg.wake_on.min_battery_percent == 50
@@ -213,3 +217,191 @@ def test_find_state_file(tmp_path, caplog):
         m.setattr(Path, "mkdir", MagicMock(side_effect=OSError("Permission denied")))
         config.find_state_file(str(unwritable_path))
         assert "Could not create directory for state file" in caplog.text
+
+
+class TestParseUpsIdentifier:
+    """Tests for the parse_ups_identifier function"""
+
+    def test_parse_simple_ups_name(self):
+        """Test parsing a simple UPS name without host"""
+        ups_name, host, port = parse_ups_identifier("myups")
+        assert ups_name == "myups"
+        assert host == "localhost"
+        assert port == 3493
+
+    def test_parse_ups_with_host(self):
+        """Test parsing UPS name with host"""
+        ups_name, host, port = parse_ups_identifier("myups@nut-server")
+        assert ups_name == "myups"
+        assert host == "nut-server"
+        assert port == 3493
+
+    def test_parse_ups_with_host_and_port(self):
+        """Test parsing UPS name with host and port"""
+        ups_name, host, port = parse_ups_identifier("myups@nut-server:9999")
+        assert ups_name == "myups"
+        assert host == "nut-server"
+        assert port == 9999
+
+    def test_parse_ups_with_ip_address(self):
+        """Test parsing UPS with IP address"""
+        ups_name, host, port = parse_ups_identifier("ups1@192.168.1.100:3493")
+        assert ups_name == "ups1"
+        assert host == "192.168.1.100"
+        assert port == 3493
+
+    def test_parse_ups_explicit_host_override(self):
+        """Test that explicit host parameter overrides parsed host"""
+        ups_name, host, port = parse_ups_identifier("myups@oldhost", explicit_host="newhost")
+        assert ups_name == "myups"
+        assert host == "newhost"
+        assert port == 3493
+
+    def test_parse_ups_explicit_port_override(self):
+        """Test that explicit port parameter overrides parsed port"""
+        ups_name, host, port = parse_ups_identifier("myups@host:8888", explicit_port=7777)
+        assert ups_name == "myups"
+        assert host == "host"
+        assert port == 7777
+
+    def test_parse_ups_both_overrides(self):
+        """Test that both explicit parameters override parsed values"""
+        ups_name, host, port = parse_ups_identifier("myups@oldhost:8888",
+                                                      explicit_host="newhost",
+                                                      explicit_port=7777)
+        assert ups_name == "myups"
+        assert host == "newhost"
+        assert port == 7777
+
+    def test_parse_ups_invalid_port(self, caplog):
+        """Test handling of invalid port in UPS identifier"""
+        ups_name, host, port = parse_ups_identifier("myups@host:notaport")
+        assert ups_name == "myups"
+        assert host == "host"
+        assert port == 3493  # Falls back to default
+        assert "Invalid port" in caplog.text
+
+    def test_parse_ups_with_explicit_host_only(self):
+        """Test parsing with only explicit host provided"""
+        ups_name, host, port = parse_ups_identifier("myups", explicit_host="custom-host")
+        assert ups_name == "myups"
+        assert host == "custom-host"
+        assert port == 3493
+
+    def test_parse_ups_with_explicit_port_only(self):
+        """Test parsing with only explicit port provided"""
+        ups_name, host, port = parse_ups_identifier("myups", explicit_port=5555)
+        assert ups_name == "myups"
+        assert host == "localhost"
+        assert port == 5555
+
+
+class TestLoadConfigWithParsing:
+    """Tests for load_config with UPS identifier parsing"""
+
+    def test_load_config_simple_ups_name(self, mocker):
+        """Test loading config with simple UPS name (no host specified)"""
+        config_dict = {
+            "nut": {"ups": "myups"},
+            "clients": [{"name": "client1", "host": "192.168.1.10", "mac": "AA:BB:CC:DD:EE:FF"}]
+        }
+        mocker.patch("builtins.open", mocker.mock_open(read_data=yaml.dump(config_dict)))
+        mocker.patch("wolnut.config.validate_config")
+        mocker.patch("wolnut.config.resolve_mac_from_host")
+
+        cfg = config.load_config("dummy.yaml", None, False)
+
+        assert cfg.nut.ups == "myups"
+        assert cfg.nut.host == "localhost"
+        assert cfg.nut.port == 3493
+
+    def test_load_config_ups_with_host(self, mocker):
+        """Test loading config with UPS@host format"""
+        config_dict = {
+            "nut": {"ups": "myups@nut-server"},
+            "clients": [{"name": "client1", "host": "192.168.1.10", "mac": "AA:BB:CC:DD:EE:FF"}]
+        }
+        mocker.patch("builtins.open", mocker.mock_open(read_data=yaml.dump(config_dict)))
+        mocker.patch("wolnut.config.validate_config")
+        mocker.patch("wolnut.config.resolve_mac_from_host")
+
+        cfg = config.load_config("dummy.yaml", None, False)
+
+        assert cfg.nut.ups == "myups"
+        assert cfg.nut.host == "nut-server"
+        assert cfg.nut.port == 3493
+
+    def test_load_config_ups_with_host_and_port(self, mocker):
+        """Test loading config with UPS@host:port format"""
+        config_dict = {
+            "nut": {"ups": "myups@nut-server:9999"},
+            "clients": [{"name": "client1", "host": "192.168.1.10", "mac": "AA:BB:CC:DD:EE:FF"}]
+        }
+        mocker.patch("builtins.open", mocker.mock_open(read_data=yaml.dump(config_dict)))
+        mocker.patch("wolnut.config.validate_config")
+        mocker.patch("wolnut.config.resolve_mac_from_host")
+
+        cfg = config.load_config("dummy.yaml", None, False)
+
+        assert cfg.nut.ups == "myups"
+        assert cfg.nut.host == "nut-server"
+        assert cfg.nut.port == 9999
+
+    def test_load_config_explicit_host_overrides_parsed(self, mocker):
+        """Test that explicit host field overrides parsed host from ups string"""
+        config_dict = {
+            "nut": {"ups": "myups@oldhost", "host": "newhost"},
+            "clients": [{"name": "client1", "host": "192.168.1.10", "mac": "AA:BB:CC:DD:EE:FF"}]
+        }
+        mocker.patch("builtins.open", mocker.mock_open(read_data=yaml.dump(config_dict)))
+        mocker.patch("wolnut.config.validate_config")
+        mocker.patch("wolnut.config.resolve_mac_from_host")
+
+        cfg = config.load_config("dummy.yaml", None, False)
+
+        assert cfg.nut.ups == "myups"
+        assert cfg.nut.host == "newhost"
+
+    def test_load_config_explicit_port_overrides_parsed(self, mocker):
+        """Test that explicit port field overrides parsed port from ups string"""
+        config_dict = {
+            "nut": {"ups": "myups@host:8888", "port": 7777},
+            "clients": [{"name": "client1", "host": "192.168.1.10", "mac": "AA:BB:CC:DD:EE:FF"}]
+        }
+        mocker.patch("builtins.open", mocker.mock_open(read_data=yaml.dump(config_dict)))
+        mocker.patch("wolnut.config.validate_config")
+        mocker.patch("wolnut.config.resolve_mac_from_host")
+
+        cfg = config.load_config("dummy.yaml", None, False)
+
+        assert cfg.nut.ups == "myups"
+        assert cfg.nut.port == 7777
+
+    def test_load_config_with_username_password(self, mocker):
+        """Test loading config with authentication credentials"""
+        config_dict = {
+            "nut": {"ups": "myups@nut-server", "username": "monitor", "password": "secret"},
+            "clients": [{"name": "client1", "host": "192.168.1.10", "mac": "AA:BB:CC:DD:EE:FF"}]
+        }
+        mocker.patch("builtins.open", mocker.mock_open(read_data=yaml.dump(config_dict)))
+        mocker.patch("wolnut.config.validate_config")
+        mocker.patch("wolnut.config.resolve_mac_from_host")
+
+        cfg = config.load_config("dummy.yaml", None, False)
+
+        assert cfg.nut.username == "monitor"
+        assert cfg.nut.password == "secret"
+
+    def test_load_config_with_custom_timeout(self, mocker):
+        """Test loading config with custom timeout"""
+        config_dict = {
+            "nut": {"ups": "myups", "timeout": 10},
+            "clients": [{"name": "client1", "host": "192.168.1.10", "mac": "AA:BB:CC:DD:EE:FF"}]
+        }
+        mocker.patch("builtins.open", mocker.mock_open(read_data=yaml.dump(config_dict)))
+        mocker.patch("wolnut.config.validate_config")
+        mocker.patch("wolnut.config.resolve_mac_from_host")
+
+        cfg = config.load_config("dummy.yaml", None, False)
+
+        assert cfg.nut.timeout == 10

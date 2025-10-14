@@ -46,13 +46,13 @@ def main(config_file: str, status_file: str, verbose: bool = False) -> int:
         restoration_event = True
         state_tracker.reset()
 
-    ups_status = get_ups_status(config.nut.ups)
+    ups_status = get_ups_status(config.nut)
     battery_percent = get_battery_percent(ups_status)
     power_status = ups_status.get("ups.status", "OL")
     logger.info("UPS power status: %s, Battery: %s%%", power_status, battery_percent)
 
     while True:
-        ups_status = get_ups_status(config.nut.ups)
+        ups_status = get_ups_status(config.nut)
         battery_percent = get_battery_percent(ups_status)
         power_status = ups_status.get("ups.status", "OL")
 

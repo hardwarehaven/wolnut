@@ -1,10 +1,18 @@
-# copy this to config.yaml befor running wolnut
+# copy this to config.yaml before running wolnut
 log_level: INFO  # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 nut:
-  ups: "ups@localhost"        # Format: <ups-name>@<host>
+  # UPS identifier - supports multiple formats:
+  # - Simple: "myups" (connects to localhost:3493)
+  # - With host: "myups@nut-server" (connects to nut-server:3493)
+  # - Full: "myups@nut-server:9999" (custom port)
+  # OR use separate fields:
+  ups: "ups@localhost"        # UPS device name (or full format above)
+  # host: "localhost"         # Optional: override/specify NUT server hostname
+  # port: 3493                # Optional: override/specify NUT server port
+  # timeout: 5                # Optional: connection timeout in seconds
   username: "upsmon"          # Optional: omit if NUT server doesn't require auth
-  password: "password"
+  password: "password"        # Optional: password for NUT authentication
 
 poll_interval: 15             # Poll interval in seconds — should be shorter than the NUT shutdown delay on any client
 status_file: "/config/wolnut_state.json"  # Path to status file, recommended you change this to be outside container if using Docker
