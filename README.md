@@ -8,7 +8,7 @@ wolnut... get it?
 
 When a UPS (connected to NUT) switches to battery power, WOLNUT:
 
-1. Detects the power event via `upsc`
+1. Detects the power event via PyNUTClient library
 2. Tracks which clients were online before the outage
 3. Waits for power to be restored and the battery to reach a safe threshold
 4. Sends WOL packets to bring back any systems that powered down

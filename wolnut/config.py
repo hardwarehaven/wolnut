@@ -16,7 +16,8 @@ DEFAULT_LOG_LEVEL = "INFO"
 
 @dataclass
 class NutConfig:
-    ups: str
+    ups: str  # UPS device name (e.g., "myups" or "myups@host:port" for backward compatibility)
+    host: str = "localhost"  # NUT server hostname/IP
     port: int = 3493
     timeout: int = 5
     username: str | None = None
@@ -46,6 +47,42 @@ class WolnutConfig:
     wake_on: WakeOnConfig = field(default_factory=WakeOnConfig)
     clients: list[ClientConfig] = field(default_factory=list)
     log_level: str = "INFO"
+
+
+def parse_ups_identifier(ups_str: str, explicit_host: str | None = None, explicit_port: int | None = None) -> tuple[str, str, int]:
+    """
+    Parse UPS identifier string which may be in formats:
+    - "myups" -> ("myups", "localhost", 3493)
+    - "myups@host" -> ("myups", "host", 3493)
+    - "myups@host:port" -> ("myups", "host", port)
+
+    Explicit host/port from config override any parsed values.
+
+    Returns: (ups_name, host, port)
+    """
+    ups_name = ups_str
+    host = "localhost"
+    port = 3493
+
+    # Parse ups@host:port format
+    if "@" in ups_str:
+        ups_name, host_part = ups_str.split("@", 1)
+        if ":" in host_part:
+            host, port_str = host_part.split(":", 1)
+            try:
+                port = int(port_str)
+            except ValueError:
+                logger.warning("Invalid port in UPS identifier '%s', using default 3493", ups_str)
+        else:
+            host = host_part
+
+    # Explicit config values override parsed values
+    if explicit_host:
+        host = explicit_host
+    if explicit_port:
+        port = explicit_port
+
+    return ups_name, host, port
 
 
 def find_state_file(state_file: Optional[str] = None) -> str:
@@ -78,8 +115,24 @@ def load_config(
         logger.exception("Failed to load or parse config file: '%s'.\n", config_path)
         return None
 
-    # LOGGING...
-    nut = NutConfig(**raw["nut"])
+    # Parse NUT configuration with UPS identifier parsing
+    raw_nut = raw["nut"]
+    ups_str = raw_nut["ups"]
+    explicit_host = raw_nut.get("host")
+    explicit_port = raw_nut.get("port")
+
+    # Parse the UPS identifier (supports ups@host:port format)
+    ups_name, host, port = parse_ups_identifier(ups_str, explicit_host, explicit_port)
+
+    # Create NutConfig with parsed values
+    nut = NutConfig(
+        ups=ups_name,
+        host=host,
+        port=port,
+        timeout=raw_nut.get("timeout", 5),
+        username=raw_nut.get("username"),
+        password=raw_nut.get("password")
+    )
 
     # get wake_on or use defaults
     wake_on = WakeOnConfig(**raw.get("wake_on", {}))
