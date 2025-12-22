@@ -7,6 +7,7 @@ from wolnut.config import load_config, DEFAULT_CONFIG_FILEPATHS
 from wolnut.state import ClientStateTracker
 from wolnut.monitor import get_ups_status, is_client_online
 from wolnut.wol import send_wol_packet
+from typing import Optional
 
 logger = logging.getLogger("wolnut")
 
@@ -196,7 +197,7 @@ def main(config_file: str, status_file: str, verbose: bool = False) -> int:
     help="The status filepath to load. Can also be set with WOLNUT_STATUS_FILE env var.",
 )
 @click.option("--verbose", is_flag=True, help="Enable verbose logging")
-def wolnut(config_file: str | None, status_file: str | None, verbose: bool) -> int:
+def wolnut(config_file: Optional[str], status_file: Optional[str], verbose: bool) -> int:
     """A service to send Wake-on-LAN packets to clients after a power outage."""
     logging.basicConfig(
         level=logging.INFO,
