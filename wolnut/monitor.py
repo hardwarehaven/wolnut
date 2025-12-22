@@ -1,14 +1,14 @@
 import subprocess
 import logging
 import platform
-from typing import Optional
+from typing import Optional, Dict
 
 logger = logging.getLogger("wolnut")
 
 
 def get_ups_status(
     ups_name: str, username: Optional[str] = None, password: Optional[str] = None
-) -> dict:
+) -> Dict[str,str]:
     env = None
 
     if username and password:
@@ -54,4 +54,4 @@ def is_client_online(host: str) -> bool:
         return result.returncode == 0
     except Exception as e:
         logger.warning("Failed to ping %s: %s", host, e)
-        return False
+    return False
