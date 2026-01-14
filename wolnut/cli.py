@@ -44,7 +44,6 @@ def main(config_file: str, status_file: str, verbose: bool = False) -> int:
     if state_tracker.was_ups_on_battery():
         logger.info("WOLNUT is resuming from a UPS battery event")
         restoration_event = True
-        state_tracker.reset()
 
     ups_status = get_ups_status(config.nut.ups)
     battery_percent = get_battery_percent(ups_status)
