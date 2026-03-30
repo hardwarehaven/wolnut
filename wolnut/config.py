@@ -17,10 +17,6 @@ DEFAULT_LOG_LEVEL = "INFO"
 @dataclass
 class NutConfig:
     ups: str
-    port: int = 3493
-    timeout: int = 5
-    username: str | None = None
-    password: str | None = None
 
 
 @dataclass

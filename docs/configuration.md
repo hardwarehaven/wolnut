@@ -35,11 +35,7 @@ The file path where `wolnut` will store its state. This allows the service to re
 Configuration for connecting to your NUT (Network UPS Tools) server.
 
 -   `ups`: **(Required)** The name and address of the UPS to monitor.
-    -   **Format**: `<ups-name>`, supports deprecated `<ups-name>@<hostname>` for backward compatibilty.
--   `hostname`: The hostname of the NUT server. Defaults to `localhost`.
--   `port`: The port of the NUT server. Defaults to `3493`.
--   `username`: The username for authenticating with the NUT server (optional).
--   `password`: The password for authenticating with the NUT server (optional).
+    -   **Format**: `<ups-name>@<hostname>` (for example: `ups@localhost`).
 
 ---
 

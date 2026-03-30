@@ -25,9 +25,6 @@ def full_config_dict():
         "status_file": "/data/status.json",
         "nut": {
             "ups": "myups@nut-server",
-            "port": 1234,
-            "username": "monuser",
-            "password": "monpassword",
         },
         "wake_on": {
             "restore_delay_sec": 60,
@@ -82,7 +79,6 @@ def test_load_config_full(mocker, full_config_dict):
     assert cfg.poll_interval == 5
     assert cfg.status_file == "/data/status.json"
     assert cfg.nut.ups == "myups@nut-server"
-    assert cfg.nut.username == "monuser"
     assert cfg.wake_on.restore_delay_sec == 60
     assert cfg.wake_on.min_battery_percent == 50
     assert len(cfg.clients) == 2

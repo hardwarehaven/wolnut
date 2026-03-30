@@ -32,12 +32,11 @@ Open `~/wolnut/config.yaml` in your favorite text editor and add the following m
 
 nut:
   # The name of your UPS as defined in your NUT server configuration.
-  # Format: <ups-name>
-  ups: "ups"
-  hostname: "127.0.0.1"  # not needed if running localhost/127.0.0.1
+  # Format: <ups-name>@<hostname>
+  ups: "ups@localhost"
 
 # The directory for the status file should be writable. It will be created if it doesn't exist.
-status_file: "/config/wolnut_state.json" 
+status_file: "/config/wolnut_state.json"
 
 clients:
   - name: "my-pc"

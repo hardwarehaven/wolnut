@@ -3,8 +3,6 @@ log_level: INFO  # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 nut:
   ups: "ups@localhost"        # Format: <ups-name>@<host>
-  username: "upsmon"          # Optional: omit if NUT server doesn't require auth
-  password: "password"
 
 poll_interval: 15             # Poll interval in seconds — should be shorter than the NUT shutdown delay on any client
 status_file: "/config/wolnut_state.json"  # Path to status file, recommended you change this to be outside container if using Docker
