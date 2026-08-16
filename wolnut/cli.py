@@ -42,9 +42,12 @@ def main(config_file: str, status_file: str, verbose: bool = False) -> int:
 
     state_tracker = ClientStateTracker(config.clients, status_file=config.status_file)
     if state_tracker.was_ups_on_battery():
+        # NOTE: Do not call state_tracker.reset() here. The persisted state
+        # (which clients were online before the outage, WOL/skip bookkeeping)
+        # is exactly what lets us resume correctly after a restart, so we
+        # must leave it intact and just re-enter the restoration flow.
         logger.info("WOLNUT is resuming from a UPS battery event")
         restoration_event = True
-        state_tracker.reset()
 
     ups_status = get_ups_status(config.nut.ups)
     battery_percent = get_battery_percent(ups_status)
