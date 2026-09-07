@@ -43,8 +43,19 @@ def main(config_file: str, status_file: str, verbose: bool = False) -> int:
     state_tracker = ClientStateTracker(config.clients, status_file=config.status_file)
     if state_tracker.was_ups_on_battery():
         logger.info("WOLNUT is resuming from a UPS battery event")
-        restoration_event = True
-        state_tracker.reset()
+        if config.reset_state_on_resume:
+            restoration_event = True
+            state_tracker.reset()
+        else:
+            # Keep the persisted state so we still know which clients were online
+            # before the outage. Pretending we are still on battery makes the main
+            # loop take the normal power restoration branch as soon as the UPS
+            # reports "OL", without re-snapshotting an offline fleet while it is
+            # still reporting "OB".
+            logger.info(
+                "Preserving saved client state (reset_state_on_resume is disabled)"
+            )
+            on_battery = True
 
     ups_status = get_ups_status(config.nut.ups)
     battery_percent = get_battery_percent(ups_status)

@@ -28,6 +28,17 @@ The file path where `wolnut` will store its state. This allows the service to re
 -   **Type**: `string`
 -   **Default**: `"/config/wolnut_state.json"`
 
+### `reset_state_on_resume`
+
+Controls what `wolnut` does with the state persisted in `status_file` when it starts up and finds that the UPS was on battery the last time it ran — in other words, when `wolnut` itself was restarted during an outage.
+
+-   **Type**: `boolean`
+-   **Default**: `true`
+
+When `true` (the default, and the historical behaviour), the saved per-client state is cleared on startup. `wolnut` will then only wake clients whose "was online before the outage" status it observed itself, so it will *not* send WOL packets for an outage it did not stay running through.
+
+Set it to `false` if `wolnut` runs on a machine that is itself shut down by the outage. In that case the saved state is the only record of which clients were online before power was lost, so keeping it is what allows `wolnut` to wake them once it boots back up. `wolnut` resumes as if the UPS were still on battery and takes the normal power restoration path as soon as the UPS reports `OL` again.
+
 ---
 
 ## `nut`

@@ -8,6 +8,9 @@ nut:
 
 poll_interval: 15             # Poll interval in seconds — should be shorter than the NUT shutdown delay on any client
 status_file: "/config/wolnut_state.json"  # Path to status file, recommended you change this to be outside container if using Docker
+reset_state_on_resume: true   # true (default) discards the saved client state when wolnut restarts during a UPS battery event.
+                              # Set to false if wolnut's own host is shut down by the outage, so it can still wake the clients
+                              # that were online before power was lost. See docs/configuration.md
 
 wake_on:
   restore_delay_sec: 30       # Delay (in seconds) after power is restored before sending WOL
