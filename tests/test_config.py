@@ -91,6 +91,44 @@ def test_load_config_full(mocker, full_config_dict):
     mock_resolve_mac.assert_called_once_with("server.local")
 
 
+def test_reset_state_on_resume_defaults_to_true(mocker, minimal_config_dict):
+    """An absent 'reset_state_on_resume' key must preserve the historical behaviour."""
+    assert "reset_state_on_resume" not in minimal_config_dict
+    mocker.patch(
+        "builtins.open", mocker.mock_open(read_data=yaml.dump(minimal_config_dict))
+    )
+    mocker.patch("wolnut.config.validate_config")
+    mocker.patch("wolnut.config.resolve_mac_from_host")
+
+    cfg = config.load_config("dummy.yaml", None, False)
+
+    assert cfg.reset_state_on_resume is True
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_reset_state_on_resume_explicit(mocker, minimal_config_dict, value):
+    """An explicit 'reset_state_on_resume' value is carried through to the config."""
+    minimal_config_dict["reset_state_on_resume"] = value
+    mocker.patch(
+        "builtins.open", mocker.mock_open(read_data=yaml.dump(minimal_config_dict))
+    )
+    mocker.patch("wolnut.config.validate_config")
+    mocker.patch("wolnut.config.resolve_mac_from_host")
+
+    cfg = config.load_config("dummy.yaml", None, False)
+
+    assert cfg.reset_state_on_resume is value
+
+
+def test_validate_config_rejects_non_boolean_reset_state_on_resume(
+    minimal_config_dict,
+):
+    """'reset_state_on_resume' must be a boolean when present."""
+    minimal_config_dict["reset_state_on_resume"] = "yes please"
+    with pytest.raises(ValueError, match="'reset_state_on_resume' must be a boolean"):
+        config.validate_config(minimal_config_dict)
+
+
 def test_load_config_file_not_found(mocker):
     """Tests that None is returned when the config file is not found."""
     mocker.patch("builtins.open", side_effect=FileNotFoundError)

@@ -12,6 +12,9 @@ logger = logging.getLogger("wolnut")
 
 DEFAULT_CONFIG_FILEPATHS = ["/config/config.yaml", "./config.yaml"]
 DEFAULT_LOG_LEVEL = "INFO"
+# Historical behaviour: discard the persisted client state when resuming from a
+# UPS battery event. See docs/configuration.md for why you may want to disable it.
+DEFAULT_RESET_STATE_ON_RESUME = True
 
 
 @dataclass
@@ -46,6 +49,7 @@ class WolnutConfig:
     wake_on: WakeOnConfig = field(default_factory=WakeOnConfig)
     clients: list[ClientConfig] = field(default_factory=list)
     log_level: str = "INFO"
+    reset_state_on_resume: bool = DEFAULT_RESET_STATE_ON_RESUME
 
 
 def find_state_file(state_file: Optional[str] = None) -> str:
@@ -118,6 +122,9 @@ def load_config(
         clients=clients,
         log_level=raw.get("log_level", DEFAULT_LOG_LEVEL).upper(),
         status_file=final_status_path,
+        reset_state_on_resume=raw.get(
+            "reset_state_on_resume", DEFAULT_RESET_STATE_ON_RESUME
+        ),
     )
     logger.info("Config Imported Successfully")
     for client in wolnut_config.clients:
@@ -135,6 +142,11 @@ def validate_config(raw: dict):
 
     if "status_file" not in raw:
         logger.warning("No 'status_file' specified in config, using default.")
+
+    if "reset_state_on_resume" in raw and not isinstance(
+        raw["reset_state_on_resume"], bool
+    ):
+        raise ValueError("'reset_state_on_resume' must be a boolean")
 
     for i, client in enumerate(raw["clients"]):
         if "name" not in client:
