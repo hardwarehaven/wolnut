@@ -4,6 +4,14 @@
 
 wolnut... get it?
 
+
+>[!IMPORTANT]
+>Help Wanted
+>
+>This project is no longer actively maintained by me. As a non-developer that stays very busy with content creation, I'm just not equipped to stay on top of this and make it a very useful project. So, I'm looking for someone interested in taking over its ongoing development and maintenance. I'm open to bringing on a new maintainer for this repository or having someone continue the project through an independent fork. 
+>
+>If you're interested, send an email to info@hardwarehaven.media with the subject line "WOLNUT".
+
 ## What It Does
 
 When a UPS (connected to NUT) switches to battery power, WOLNUT:
