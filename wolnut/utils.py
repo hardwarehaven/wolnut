@@ -1,7 +1,9 @@
-import subprocess
+from subprocess import Popen, PIPE
 import re
 import logging
+from typing import Optional
 
+_MAC_ADDRESS_PATTERN = re.compile(r"([0-9A-Fa-f]{2}[:\-]){5}([0-9A-Fa-f]{2})")
 logger = logging.getLogger("wolnut")
 
 
@@ -15,11 +17,10 @@ def validate_mac_format(mac: str) -> bool:
     Returns:
         bool: True if valid.
     """
-    pattern = re.compile(r"^([0-9A-Fa-f]{2}[:\-]){5}([0-9A-Fa-f]{2})$")
-    return bool(pattern.match(mac))
+    return _MAC_ADDRESS_PATTERN.fullmatch(mac) is not None
 
 
-def resolve_mac_from_host(host: str) -> str | None:
+def resolve_mac_from_host(host: str) -> Optional[str]:
     """
     Attempts to resolve MAC address with provided hostname or IP.
 
@@ -27,27 +28,23 @@ def resolve_mac_from_host(host: str) -> str | None:
         host (str): IP or Hostname.
 
     Returns:
-        str | None: The MAC address as a colon-separated string if found,
+        Optional[str]: The MAC address as a colon-separated string if found,
         otherwise None.
     """
+    # FIXME: is it really necessary to ping before running ARP? 
+    # if cache is not populated, it should be resolved correctly; if not this hints at a deeper bug
+
     # Send a ping to ensure the ARP cache is populated
     try:
-        subprocess.run(
-            ["ping", "-c", "1", host],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        Popen(["ping", "-c", "1", host]).communicate()
     except Exception as e:
         logger.warning("Failed to ping: %s: %s", host, e)
-        return None
+        return
 
     # Read the ARP table
     try:
-        result = subprocess.run(["arp", "-n", host], capture_output=True, text=True)
-        match = re.search(r"(([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2})", result.stdout)
-        if match:
+        out = Popen(["arp", "-n", host], text=True, stdout=PIPE).communicate()
+        if (match := _MAC_ADDRESS_PATTERN.search(out)):
             return match.group(0)
     except Exception as e:
         logger.warning("Failed to resolve ARP for: %s: %s", host, e)
-
-    return None

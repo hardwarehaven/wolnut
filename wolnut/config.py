@@ -3,7 +3,7 @@ import yaml
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from wolnut.state import DEFAULT_STATE_FILEPATH
 from wolnut.utils import validate_mac_format, resolve_mac_from_host
@@ -19,8 +19,8 @@ class NutConfig:
     ups: str
     port: int = 3493
     timeout: int = 5
-    username: str | None = None
-    password: str | None = None
+    username: Optional[str] = None
+    password: Optional[str] = None
 
 
 @dataclass
@@ -65,7 +65,7 @@ def find_state_file(state_file: Optional[str] = None) -> str:
 
 
 def load_config(
-    config_path: str, status_path: str = None, verbose: bool = False
+    config_path: str, status_path: Optional[str] = None, verbose: bool = False
 ) -> Optional[WolnutConfig]:
     try:
         with open(config_path, "r") as f:
@@ -73,11 +73,10 @@ def load_config(
         validate_config(raw)
     except FileNotFoundError:
         logger.error("Config file not found at '%s'.", config_path)
-        return None
+        return
     except Exception:
         logger.exception("Failed to load or parse config file: '%s'.\n", config_path)
-        return None
-
+        return
     # LOGGING...
     nut = NutConfig(**raw["nut"])
 
@@ -126,7 +125,7 @@ def load_config(
     return wolnut_config
 
 
-def validate_config(raw: dict):
+def validate_config(raw: Dict[str,Any]) -> None:
     if "clients" not in raw or not isinstance(raw["clients"], list):
         raise ValueError("Missing or invalid 'clients' list")
 
